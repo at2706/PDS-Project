@@ -53,5 +53,4 @@ def create_user(email, first_name, last_name, pwd1, pwd2):
         flash("Successfully Created User.", "info")
         return True
 
-
 app.run("127.0.0.1", 5000, debug=True)
