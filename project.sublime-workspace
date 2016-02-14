@@ -11,7 +11,39 @@
 			"file": "main.py",
 			"settings":
 			{
-				"buffer_size": 328,
+				"buffer_size": 1356,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "templates/register.html",
+			"settings":
+			{
+				"buffer_size": 1279,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "templates/layout.html",
+			"settings":
+			{
+				"buffer_size": 5906,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "templates/index.html",
+			"settings":
+			{
+				"buffer_size": 505,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "static/content/style.css",
+			"settings":
+			{
+				"buffer_size": 63,
 				"line_ending": "Windows"
 			}
 		}
@@ -83,17 +115,45 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 196.0,
-		"last_filter": "git comm",
+		"height": 127.0,
+		"last_filter": "list pack",
 		"selected_items":
 		[
 			[
-				"git comm",
+				"list pack",
+				"Package Control: List Packages"
+			],
+			[
+				"git push",
+				"Git: Push"
+			],
+			[
+				"git com",
 				"Git: Commit"
 			],
 			[
-				"list pac",
-				"Package Control: List Packages"
+				"git add all",
+				"Git: Add All"
+			],
+			[
+				"git diff",
+				"Git: Diff All Files"
+			],
+			[
+				"git dif",
+				"Git: Diff All Files"
+			],
+			[
+				"git",
+				"Git: Commit"
+			],
+			[
+				"git commit",
+				"Git: Commit history"
+			],
+			[
+				"git a",
+				"Git: Add All"
 			],
 			[
 				"install",
@@ -104,16 +164,8 @@
 				"Package Control: Install Package"
 			],
 			[
-				"git push",
-				"Git: Push Current Branch"
-			],
-			[
 				"git remo",
 				"Git: Track Remote Branch"
-			],
-			[
-				"git",
-				"Git: Commit"
 			]
 		],
 		"width": 528.0
@@ -137,13 +189,24 @@
 	},
 	"expanded_folders":
 	[
-		"/C/Users/andyq/Google Drive/PDS/project/"
+		"/D/Users/andyt/Google Drive/PDS/project/",
+		"/D/Users/andyt/Google Drive/PDS/project//static",
+		"/D/Users/andyt/Google Drive/PDS/project//static/content",
+		"/D/Users/andyt/Google Drive/PDS/project//static/fonts",
+		"/D/Users/andyt/Google Drive/PDS/project//static/scripts",
+		"/D/Users/andyt/Google Drive/PDS/project//templates"
 	],
 	"file_history":
 	[
+		"/D/Users/andyt/Downloads/barter_site-master/barter/views.py",
+		"/D/Users/andyt/Downloads/barter_site-master/barter/templates/base.html",
+		"/C/Users/andyt/AppData/Roaming/Sublime Text 3/Packages/SublimeCodeIntel/SublimeCodeIntel.sublime-settings",
+		"/D/Users/andyt/Google Drive/PDS/project/templates/layout.html",
+		"/C/Users/andyt/AppData/Roaming/Sublime Text 3/Packages/User/Git.sublime-settings",
+		"/C/Users/andyt/AppData/Roaming/Sublime Text 3/Packages/Git/Git.sublime-settings",
+		"/C/Users/andyt/AppData/Roaming/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
 		"/C/Users/andyt/AppData/Roaming/Sublime Text 3/Packages/Python PEP8 Autoformat/pep8_autoformat.sublime-settings",
 		"/D/Users/andyt/Google Drive/PDS/project/templates/index.html",
-		"/D/Users/andyt/Google Drive/PDS/project/templates/layout.html",
 		"/C/Users/andyt/AppData/Roaming/Sublime Text 3/Packages/User/pep8_autoformat.sublime-settings",
 		"/D/Users/andyt/Google Drive/PDS/project/project.sublime-project",
 		"/C/Users/andyt/AppData/Roaming/Sublime Text 3/Packages/User/Flask.sublime-build",
@@ -166,6 +229,8 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"register",
+			"message",
 			"ctrl+shift+b"
 		],
 		"highlight": true,
@@ -193,28 +258,150 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 328,
+						"buffer_size": 1356,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								328,
-								328
+								1232,
+								1232
 							]
 						],
 						"settings":
 						{
 							"auto_complete": false,
 							"syntax": "Packages/Python/Python.sublime-syntax",
-							"translate_tabs_to_spaces": false
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "templates/register.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1279,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								827,
+								827
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "templates/layout.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5906,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2310,
+								2310
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 330.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "templates/index.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 505,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								169,
+								169
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "static/content/style.css",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 63,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								63,
+								63
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/CSS/CSS.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
 					"type": "text"
 				}
 			]
@@ -226,7 +413,7 @@
 	},
 	"input":
 	{
-		"height": 31.0
+		"height": 0.0
 	},
 	"layout":
 	{

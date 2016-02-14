@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<form method="post" action="">
+
+    <div class="form-group">
+        <label for="email">Email address</label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="Email">
+    </div>
+
+    <div class="form-group col-md-6" style="padding-left: 0px">
+        <label for="first_name">First Name</label>
+        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="First">
+    </div>
+
+    <div class="form-group col-md-6" style="padding: 0px">
+        <label for="last_name">Last Name</label>
+        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Last">
+    </div>
+
+    <div class="form-group col-md-6" style="padding-left: 0px">
+        <label for="password1">Password</label>
+        <input type="password" class="form-control" id="password1" name="password1" placeholder="Password">
+    </div>
+
+    <div class="form-group col-md-6" style="padding: 0px">
+        <label for="password2">Confirm Password</label>
+        <input type="password" class="form-control" id="password2" name="password2" placeholder="Password">
+    </div>
+
+    
+    <button type="submit" class="btn btn-default">Submit</button>
+
+</form>
+
+{% endblock %}
