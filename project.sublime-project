@@ -1,19 +1,24 @@
 {
-	"folders":
-	[
-		{
-			"path": "/"
-		}
-	],
+		"folders":
+		[
+				{
+						"path": "/"
+				}
+		],
 
-	"build_systems":
-    [
-        {
-        	"name": "Flask",
-		    "cmd": ["python", "-u", "main.py"],
-		    "file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
-		    "working_dir": "${project_path:${folder}}",
-		    "selector": "source.python",
-		}
-    ]
+		"settings":
+		{
+				"tab_size": 2
+		},
+
+		"build_systems":
+		[
+				{
+						"name": "Flask",
+						"cmd": ["python", "-u", "main.py"],
+						"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+						"working_dir": "${project_path:${folder}}",
+						"selector": "source.python",
+				}
+		]
 }

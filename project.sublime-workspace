@@ -8,13 +8,42 @@
 	"buffers":
 	[
 		{
-			"contents": "import os\nfrom flask import Flask, render_template, request, redirect, flash, session\n\napp = Flask(__name__)\napp.secret_key = os.urandom(24)\n\n\n@app.route(\"/\")\n@app.route(\"/home\")\ndef home():\n    return render_template(\n        'index.html',\n        title='Home'\n    )\n\n\n@app.route(\"/register\", methods=['post', 'get'])\ndef register():\n    if request.method == 'POST':\n        email = request.form[\"email\"]\n        first_name = request.form[\"first_name\"]\n        last_name = request.form[\"last_name\"]\n        pwd1 = request.form[\"password1\"]\n        pwd2 = request.form[\"password2\"]\n        if create_user(email, first_name, last_name, pwd1, pwd2):\n            return home()\n\n    return render_template(\n        'register.html',\n        title=\"Register\"\n    )\n\n# @app.route('/', defaults={'path': ''})\n# @app.route('/<path:path>')\n# def catch_all(path):\n#     return 'You want path: %s' % path\n\n\n@app.errorhandler(404)\ndef page_not_found(e):\n    return render_template(\n        '404.html',\n        title=\"404 Error\"), 404\n\n\ndef create_user(email, first_name, last_name, pwd1, pwd2):\n    if not email:\n        flash(\"Invalid Email.\", \"warning\")\n        return False\n    if pwd1 != pwd2:\n        flash(\"Passwords do not match.\", \"warning\")\n        return False\n    else:\n        flash(\"Successfully Created User.\", \"info\")\n        return True\n\napp.run(\"127.0.0.1\", 5000, debug=True)\n",
 			"file": "main.py",
-			"file_size": 1428,
-			"file_write_time": 130999682874995878,
 			"settings":
 			{
-				"buffer_size": 1380,
+				"buffer_size": 2654,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "templates/login.html",
+			"settings":
+			{
+				"buffer_size": 664,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "README.md",
+			"settings":
+			{
+				"buffer_size": 359,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "project.sublime-project",
+			"settings":
+			{
+				"buffer_size": 348,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "static/css/style.css",
+			"settings":
+			{
+				"buffer_size": 528,
 				"line_ending": "Windows"
 			}
 		},
@@ -22,7 +51,7 @@
 			"file": "templates/register.html",
 			"settings":
 			{
-				"buffer_size": 1278,
+				"buffer_size": 1350,
 				"line_ending": "Windows"
 			}
 		},
@@ -30,7 +59,15 @@
 			"file": "templates/layout.html",
 			"settings":
 			{
-				"buffer_size": 5892,
+				"buffer_size": 2579,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "templates/404.html",
+			"settings":
+			{
+				"buffer_size": 179,
 				"line_ending": "Windows"
 			}
 		},
@@ -38,15 +75,7 @@
 			"file": "templates/index.html",
 			"settings":
 			{
-				"buffer_size": 505,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "static/content/style.css",
-			"settings":
-			{
-				"buffer_size": 63,
+				"buffer_size": 480,
 				"line_ending": "Windows"
 			}
 		}
@@ -192,15 +221,11 @@
 	},
 	"expanded_folders":
 	[
-		"/D/Users/andyt/Google Drive/PDS/project/",
-		"/D/Users/andyt/Google Drive/PDS/project//static",
-		"/D/Users/andyt/Google Drive/PDS/project//static/content",
-		"/D/Users/andyt/Google Drive/PDS/project//static/fonts",
-		"/D/Users/andyt/Google Drive/PDS/project//static/scripts",
-		"/D/Users/andyt/Google Drive/PDS/project//templates"
+		"/D/Users/andyt/Google Drive/PDS/project/"
 	],
 	"file_history":
 	[
+		"/D/Users/andyt/Google Drive/PDS/project/static/content/style.css",
 		"/D/Users/andyt/Downloads/barter_site-master/barter/views.py",
 		"/D/Users/andyt/Downloads/barter_site-master/barter/templates/base.html",
 		"/C/Users/andyt/AppData/Roaming/Sublime Text 3/Packages/SublimeCodeIntel/SublimeCodeIntel.sublime-settings",
@@ -254,7 +279,7 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 2,
 			"sheets":
 			[
 				{
@@ -263,15 +288,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1380,
+						"buffer_size": 2654,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								85,
-								85
+								304,
+								304
 							]
 						],
 						"settings":
@@ -282,6 +307,65 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
+						"translation.y": 135.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "templates/login.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 664,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								508,
+								508
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "README.md",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 359,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								359,
+								359
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/Markdown/Markdown.sublime-syntax"
+						},
+						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
@@ -289,28 +373,58 @@
 					"type": "text"
 				},
 				{
-					"buffer": 1,
-					"file": "templates/register.html",
+					"buffer": 3,
+					"file": "project.sublime-project",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1278,
+						"buffer_size": 348,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								81,
-								81
+								348,
+								348
 							]
 						],
 						"settings":
 						{
-							"auto_complete": false,
-							"syntax": "Packages/HTML/HTML.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
+							"auto_complete": true,
+							"syntax": "Packages/JavaScript/JSON.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "static/css/style.css",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 528,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								117,
+								117
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/CSS/CSS.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
@@ -320,93 +434,126 @@
 					"type": "text"
 				},
 				{
-					"buffer": 2,
-					"file": "templates/layout.html",
+					"buffer": 5,
+					"file": "templates/register.html",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 5892,
+						"buffer_size": 1350,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								5226,
-								5226
+								1301,
+								1308
 							]
 						],
 						"settings":
 						{
 							"auto_complete": false,
 							"syntax": "Packages/HTML/HTML.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 405.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "templates/index.html",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 505,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								169,
-								169
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"syntax": "Packages/HTML/HTML.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "static/content/style.css",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 63,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								63,
-								63
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/CSS/CSS.sublime-syntax"
+							"tab_size": 2,
+							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "templates/layout.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2579,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1264,
+								1264
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "templates/404.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 179,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								115,
+								124
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "templates/index.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 480,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								480,
+								0
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
 					"type": "text"
 				}
 			]
@@ -459,7 +606,7 @@
 	"project": "project.sublime-project",
 	"replace":
 	{
-		"height": 42.0
+		"height": 62.0
 	},
 	"save_all_on_build": true,
 	"select_file":
