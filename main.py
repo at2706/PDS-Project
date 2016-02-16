@@ -1,11 +1,15 @@
 import os
 import hashlib
 from flask import Flask, render_template, request, redirect, flash, url_for, abort, session
+from jinja2 import TemplateNotFound
+from werkzeug import secure_filename
 import flask.ext.login as flask_login
 
 
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
+app.config['UPLOAD_FOLDER'] = 'db/uploads'
 
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
@@ -88,10 +92,55 @@ def profile(user_id):
     )
 
 
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+
+@app.route('/user', methods=['POST'])
+def upload_file():
+    if request.method == 'POST':
+        file = request.files['file']
+        file_ext = file.filename.rsplit('.', 1)[1]
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return redirect(url_for('home'))
+        else:
+            abort(400)
+
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def catch_all(path):
+    try:
+        return render_template(
+            path + '.html'
+        )
+    except TemplateNotFound:
+        abort(404)
+
+
+@app.errorhandler(400)
+@app.errorhandler(401)
+@app.errorhandler(403)
 @app.errorhandler(404)
-def page_not_found(e):
+def error(e):
+    msg = str(e.code) + ' '
+    if e.code == 400:
+        msg += 'Bad Request!'
+    elif e.code == 401:
+        msg += 'Unauthorized!'
+    elif e.code == 403:
+        msg += 'Forbidden!'
+    elif e.code == 404:
+        msg += 'Page Not Found!'
+    else:
+        msg += 'Something Bad Happened'
     return render_template(
-        '404.html'), 404
+        'error.html',
+        title='Error ' + str(e.code),
+        message=msg), e.code
 
 
 def create_user(email, first_name, last_name, pwd1, pwd2):
@@ -107,7 +156,7 @@ def create_user(email, first_name, last_name, pwd1, pwd2):
         id = 1
         for id, line in enumerate(file, 1):
             attr = line.strip('\n').split("\t")
-            if attr[0] == email:
+            if attr[1] == email:
                 flash("This email is already registered.", "warning")
                 return False
             id += 1
