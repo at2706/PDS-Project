@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block title %}
+<title>Home</title>
+{% endblock %}
+
+{% block content %}
+<h1>User Profile
+      {% if user == currentUser %}
+      <a class="btn btn-default" href="edit">Edit Profile</a>
+      {% endif %}
+  </h1>
+
+  <hr/>
+  <div class="col-md-5">
+  <h3>Information</h3><hr/>
+      <dl class="dl-horizontal">
+          <dt>Email</dt>
+          <dd>
+              <span><small>
+              </small></span>
+          </dd>
+          <dt>First Name</dt><dd>{{ user.first_name }}</dd>
+          <dt>Last Name</dt><dd>{{ user.last_name }}</dd>
+          <dt>Date of Birth</dt><dd>{{ user.date_of_birth }}</dd>
+          <dt>Gender</dt><dd>{{ user.gender }}</dd>
+          <dt>Last Login</dt><dd>{{ user.last_login }}</dd>
+          <dt>Average Rating</dt><dd>{{ user.rating }}</dd>
+      </dl>
+  </div>
+
+{% endblock %}

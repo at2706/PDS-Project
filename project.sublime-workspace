@@ -3,6 +3,26 @@
 	{
 		"selected_items":
 		[
+			[
+				"user",
+				"user_file"
+			],
+			[
+				"firs",
+				"first_name"
+			],
+			[
+				"flas",
+				"flask_login"
+			],
+			[
+				"url_",
+				"url_for	Flask"
+			],
+			[
+				"url",
+				"url_for	Flask"
+			]
 		]
 	},
 	"buffers":
@@ -11,7 +31,15 @@
 			"file": "main.py",
 			"settings":
 			{
-				"buffer_size": 2654,
+				"buffer_size": 3520,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "templates/user.html",
+			"settings":
+			{
+				"buffer_size": 845,
 				"line_ending": "Windows"
 			}
 		},
@@ -20,14 +48,6 @@
 			"settings":
 			{
 				"buffer_size": 664,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "README.md",
-			"settings":
-			{
-				"buffer_size": 359,
 				"line_ending": "Windows"
 			}
 		},
@@ -59,7 +79,7 @@
 			"file": "templates/layout.html",
 			"settings":
 			{
-				"buffer_size": 2579,
+				"buffer_size": 2620,
 				"line_ending": "Windows"
 			}
 		},
@@ -75,7 +95,7 @@
 			"file": "templates/index.html",
 			"settings":
 			{
-				"buffer_size": 480,
+				"buffer_size": 482,
 				"line_ending": "Windows"
 			}
 		}
@@ -221,10 +241,13 @@
 	},
 	"expanded_folders":
 	[
-		"/D/Users/andyt/Google Drive/PDS/project/"
+		"/D/Users/andyt/Google Drive/PDS/project/",
+		"/D/Users/andyt/Google Drive/PDS/project//templates"
 	],
 	"file_history":
 	[
+		"/D/Users/andyt/Downloads/barter_site-master/barter/templates/barter/user.html",
+		"/D/Users/andyt/Google Drive/PDS/project/README.md",
 		"/D/Users/andyt/Google Drive/PDS/project/static/content/style.css",
 		"/D/Users/andyt/Downloads/barter_site-master/barter/views.py",
 		"/D/Users/andyt/Downloads/barter_site-master/barter/templates/base.html",
@@ -258,6 +281,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"object",
 			"HEAD",
 			"register",
 			"message",
@@ -269,6 +293,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"user"
 		],
 		"reverse": false,
 		"show_context": true,
@@ -279,7 +304,7 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 6,
 			"sheets":
 			[
 				{
@@ -288,15 +313,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2654,
+						"buffer_size": 3520,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								304,
-								304
+								1945,
+								1945
 							]
 						],
 						"settings":
@@ -307,14 +332,43 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 135.0,
+						"translation.y": 1035.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "templates/user.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 845,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								819,
+								819
+							]
+						],
+						"settings":
+						{
+							"auto_complete": false,
+							"syntax": "Packages/HTML/HTML.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 4,
 					"type": "text"
 				},
 				{
-					"buffer": 1,
+					"buffer": 2,
 					"file": "templates/login.html",
 					"semi_transient": false,
 					"settings":
@@ -326,8 +380,8 @@
 						"selection":
 						[
 							[
-								508,
-								508
+								524,
+								524
 							]
 						],
 						"settings":
@@ -340,36 +394,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "README.md",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 359,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								359,
-								359
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"syntax": "Packages/Markdown/Markdown.sublime-syntax"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
+					"stack_index": 3,
 					"type": "text"
 				},
 				{
@@ -385,8 +410,8 @@
 						"selection":
 						[
 							[
-								348,
-								348
+								250,
+								250
 							]
 						],
 						"settings":
@@ -400,7 +425,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 5,
+					"stack_index": 6,
 					"type": "text"
 				},
 				{
@@ -430,7 +455,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 7,
 					"type": "text"
 				},
 				{
@@ -446,8 +471,8 @@
 						"selection":
 						[
 							[
-								1301,
-								1308
+								1349,
+								1349
 							]
 						],
 						"settings":
@@ -461,7 +486,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
@@ -470,15 +495,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2579,
+						"buffer_size": 2620,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1264,
-								1264
+								1274,
+								1274
 							]
 						],
 						"settings":
@@ -492,7 +517,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 8,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
@@ -522,7 +547,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 7,
+					"stack_index": 8,
 					"type": "text"
 				},
 				{
@@ -531,15 +556,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 480,
+						"buffer_size": 482,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								480,
-								0
+								374,
+								374
 							]
 						],
 						"settings":
@@ -553,7 +578,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 6,
+					"stack_index": 5,
 					"type": "text"
 				}
 			]
@@ -599,6 +624,10 @@
 		"height": 0.0
 	},
 	"output.git":
+	{
+		"height": 100.0
+	},
+	"output.unsaved_changes":
 	{
 		"height": 100.0
 	},

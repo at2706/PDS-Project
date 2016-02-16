@@ -16,13 +16,18 @@ class User(flask_login.UserMixin):
 
 
 @login_manager.user_loader
-def user_loader(email):
+def user_loader(id):
     # if email not in users:
     #     return
 
+    data = {}
+    with open("db/users/" + str(id)) as user_file:
+        for line in user_file:
+            (key, val) = line.split(':')
+            data[key] = val
     user = User()
-    user.id = email
-    user.first = "hello lol"
+    user.id = id
+    user.name = data['name']
     return user
 
 
@@ -75,6 +80,14 @@ def logout():
     return home()
 
 
+@app.route('/user/<int:user_id>')
+def profile(user_id):
+    return render_template(
+        'user.html',
+        user=User()
+    )
+
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template(
@@ -90,26 +103,29 @@ def create_user(email, first_name, last_name, pwd1, pwd2):
         return False
 
     # open and write user to file
-    with open("db/users", "a+") as file:
-        for line in file:
+    with open("db/user_index", "a+") as file:
+        id = 1
+        for id, line in enumerate(file, 1):
             attr = line.strip('\n').split("\t")
             if attr[0] == email:
                 flash("This email is already registered.", "warning")
                 return False
-        file.write(email + "\t" + first_name + "\t" + last_name + "\t" + hashlib.sha512(pwd1).hexdigest() + "\n")
-        file.close()
+            id += 1
+        file.write(str(id) + "\t" + email + "\t" + hashlib.sha512(pwd1).hexdigest() + "\n")
+        with open("db/users/" + str(id), "w+") as user_file:
+            user_file.write("name:" + first_name + " " + last_name + "\n")
 
     flash("Successfully Created User.", "info")
     return True
 
 
 def login_user(email, password):
-    with open("db/users", "r") as file:
+    with open("db/user_index", "r") as file:
         for line in file:
             attr = line.strip('\n').split("\t")
-            if attr[0] == email and attr[3] == hashlib.sha512(password).hexdigest():
+            if attr[1] == email and attr[2] == hashlib.sha512(password).hexdigest():
                 user = User()
-                user.id = email
+                user.id = attr[0]
                 flask_login.login_user(user)
 
                 flash("Logged in.", "success")
