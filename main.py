@@ -3,36 +3,12 @@ import hashlib
 from flask import Flask, render_template, request, redirect, flash, url_for, abort, session
 from jinja2 import TemplateNotFound
 from werkzeug import secure_filename
-import flask.ext.login as flask_login
+from user import User
 
 
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-app.config['UPLOAD_FOLDER'] = 'db/uploads'
-
-login_manager = flask_login.LoginManager()
-login_manager.init_app(app)
-
-
-class User(flask_login.UserMixin):
-    pass
-
-
-@login_manager.user_loader
-def user_loader(id):
-    # if email not in users:
-    #     return
-
-    data = {}
-    with open("db/users/" + str(id)) as user_file:
-        for line in user_file:
-            (key, val) = line.split(':')
-            data[key] = val
-    user = User()
-    user.id = id
-    user.name = data['name']
-    return user
 
 
 @app.route("/")
@@ -62,7 +38,7 @@ def register():
 
 @app.route("/login", methods=['post', 'get'])
 def login():
-    if flask_login.current_user.is_authenticated:
+    if 'userid' in session:
         flash("You're already logged in!", "warning")
         return redirect(url_for('home'))
     if request.method == 'POST':
@@ -79,35 +55,20 @@ def login():
 
 @app.route("/logout")
 def logout():
-    flask_login.logout_user()
-    flash("Logged out.", "success")
-    return home()
+    session.clear()
+    return redirect(url_for('home'))
 
 
 @app.route('/user/<int:user_id>')
 def profile(user_id):
-    return render_template(
-        'user.html',
-        user=User()
-    )
-
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
-
-@app.route('/user', methods=['POST'])
-def upload_file():
-    if request.method == 'POST':
-        file = request.files['file']
-        file_ext = file.filename.rsplit('.', 1)[1]
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return redirect(url_for('home'))
-        else:
-            abort(400)
+    try:
+        return render_template(
+            'user.html',
+            user=User(user_id),
+            current_user=(int(session['userid']) == user_id)
+        )
+    except Exception:
+        abort(404)
 
 
 @app.route('/', defaults={'path': ''})
@@ -163,6 +124,7 @@ def create_user(email, first_name, last_name, pwd1, pwd2):
         file.write(str(id) + "\t" + email + "\t" + hashlib.sha512(pwd1).hexdigest() + "\n")
         with open("db/users/" + str(id), "w+") as user_file:
             user_file.write("name:" + first_name + " " + last_name + "\n")
+            user_file.write("email:" + email + "\n")
 
     flash("Successfully Created User.", "info")
     return True
@@ -173,10 +135,10 @@ def login_user(email, password):
         for line in file:
             attr = line.strip('\n').split("\t")
             if attr[1] == email and attr[2] == hashlib.sha512(password).hexdigest():
-                user = User()
-                user.id = attr[0]
-                flask_login.login_user(user)
-
+                user = User(attr[0])
+                session['userid'] = user.id
+                session['username'] = user.name
+                session['useremail'] = user.email
                 flash("Logged in.", "success")
                 return True
 

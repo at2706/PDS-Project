@@ -27,8 +27,8 @@
 						<!-- Collect the nav links, forms, and other content for toggling -->
 						<div class="collapse navbar-collapse" id="collapse-items">
 								<ul class="nav navbar-nav navbar-right">
-										{% if current_user.is_authenticated %}
-												<li><a href="{{ url_for('profile', user_id = current_user.id) }}">{{current_user.name}}</a></li>
+										{% if session['userid'] %}
+												<li><a href="{{ url_for('profile', user_id = session['userid']) }}">{{ session['username'] }}</a></li>
 												<li><a href="{{ url_for('logout') }}">Logout</a></li>
 										{% else %}
 												<li><a href="{{ url_for('register') }}">Register</a></li>
