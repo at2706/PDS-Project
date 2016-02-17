@@ -7,7 +7,7 @@
 {% block content %}
 <h1>User Profile</h1>
 {% if current_user %}
-<a class="btn btn-default" href="edit">Edit Profile</a>
+<a class="btn btn-default" href="{{ url_for('edit', user_id = user.id) }}">Edit Profile</a>
 <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#confirmdialog">
 	Delete Account
 </button>
@@ -22,11 +22,15 @@
       <div class="modal-body">
         <p>Are you sure you want to delete your account?</p>
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-danger">delete</button>
+        <a type="button" class="btn btn-danger" href="{{ url_for('delete', user_id = user.id) }}">delete</a>
       </div>
     </div>
   </div>
 </div>
+{% elif session['userid'] %}
+  <a class="btn btn-primary" href="">
+    Follow
+  </a>
 {% endif %}
 
 

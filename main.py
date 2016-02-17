@@ -6,7 +6,6 @@ from werkzeug import secure_filename
 from user import User
 
 
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
@@ -71,6 +70,22 @@ def profile(user_id):
         abort(404)
 
 
+@app.route('/edit/<int:user_id>')
+def edit(user_id):
+    return render_template(
+        'user_edit.html')
+
+
+@app.route('/delete/<int:user_id>')
+def delete(user_id):
+    if int(session['userid']) == user_id:
+        User.delete(user_id)
+        flash("User account has been removed!", "success")
+        return redirect(url_for('logout'))
+    else:
+        flash("An error has occured.", "danger")
+
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def catch_all(path):
@@ -106,10 +121,10 @@ def error(e):
 
 def create_user(email, first_name, last_name, pwd1, pwd2):
     if not email:
-        flash("Invalid Email.", "warning")
+        flash("Invalid Email.", "danger")
         return False
     if pwd1 != pwd2:
-        flash("Passwords do not match.", "warning")
+        flash("Passwords do not match.", "danger")
         return False
 
     # open and write user to file
@@ -120,7 +135,7 @@ def create_user(email, first_name, last_name, pwd1, pwd2):
             if attr[1] == email:
                 flash("This email is already registered.", "warning")
                 return False
-            id += 1
+            id = int(attr[0]) + 1
         file.write(str(id) + "\t" + email + "\t" + hashlib.sha512(pwd1).hexdigest() + "\n")
         with open("db/users/" + str(id), "w+") as user_file:
             user_file.write("name:" + first_name + " " + last_name + "\n")
