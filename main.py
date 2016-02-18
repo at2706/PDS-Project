@@ -10,11 +10,22 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
 
-@app.route("/")
-@app.route("/home")
+@app.route("/", methods=['post', 'get'])
+@app.route("/home", methods=['post', 'get'])
 def home():
+    if 'userid' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        message = request.form['message']
+        if post_message(session['userid'], session['username'], message):
+            return redirect(url_for('home'))
+
     return render_template(
-        'index.html'
+        'index.html',
+        messages=getMessagesBy(session['userid']),
+        username=session['username'],
+        useremail=session['useremail']
     )
 
 
@@ -159,6 +170,32 @@ def login_user(email, password):
 
     flash("Bad Login.", "warning")
     return False
+
+
+def post_message(userid, username, message):
+    with open("db/messages", "a") as file:
+        file.write(userid + "\t" + username + "\t" + message.strip() + "\n")
+        file.close
+
+    flash("Successfully posted message.", "info")
+    return True
+
+
+def getMessagesBy(userid):
+    messages = []
+    try:
+        with open("db/messages", "r") as file:
+            for line in file:
+                attr = line.strip('\n').split("\t")
+                message = {}
+                message['writer'] = attr[1]
+                message['content'] = attr[2]
+                messages.append(message.copy())
+        messages.reverse()
+    except:
+        return []
+
+    return messages
 
 
 app.run("127.0.0.1", 5000, debug=True)

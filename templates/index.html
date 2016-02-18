@@ -5,16 +5,52 @@
 {% endblock %}
 
 {% block content %}
-<div class="panel panel-default">
-		<div class="panel-heading">
-				<h3 class="panel-title">Tweet Title</h3>
-				<p><span class="glyphicon glyphicon-time"></span> Posted on August 28, 2013 at 10:00 PM</p>
+<div class="row">
+	<div class="col-md-3">
+		<div class="panel panel-default">
+			<div class="panel-heading">Your profile</div>
+		 	<div class="panel-body">
+		    	<h3>{{username}}</h3>
+				<span>{{useremail}}</span>
+			</div>
 		</div>
-		<div class="panel-body">
-				Hello {# {{ current_user.name }} {{ current_user.first}} #}
+		<div class="panel panel-default">
+			<div class="panel-heading">People you're following</div>
+		 	<div class="panel-body">
+		    	people you're following
+			</div>
 		</div>
-
-		<div class="panel-footer">Panel footer</div>
+		<div class="panel panel-default">
+			<div class="panel-heading">Your followers</div>
+		 	<div class="panel-body">
+		    	followers
+			</div>
+		</div>
+	</div>
+	<div class="col-md-5">
+		<h3>Posts by you</h3>
+		<hr/>
+		<form method="POST">
+			<div class="form-group">
+				<textarea class="form-control" rows="2" name="message" placeholder="What are you up to?"></textarea>
+				<button type="submit" class="btn btn-primary btn-block btn-sm">Post</button>
+			</div>
+		</form>
+		<ul class="list-group">
+			{% for message in messages %}
+				<li class="list-group-item">{{message.content}}</li>
+			{% endfor %}
+		</ul>
+	</div>
+	<div class="col-md-4">
+		<h3>Posts by people you followed</h3>
+		<hr/>
+		<ul class="list-group">
+			{% for message in messages %}
+				<li class="list-group-item">{{message.writer}}: {{message.content}}</li>
+			{% endfor %}
+		</ul>
+	</div>
 </div>
 
 {% endblock %}
