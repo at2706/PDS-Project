@@ -17,13 +17,21 @@
 		<div class="panel panel-default">
 			<div class="panel-heading">People you're following</div>
 		 	<div class="panel-body">
-		    	people you're following
+		    	<ul class="list-unstyled">
+		    		{% for followee in followees %}
+						<li><a href="{{ url_for('profile', user_id=followee.id) }}">{{followee.name}}</a></li>
+					{% endfor %}
+		    	</ul>
 			</div>
 		</div>
 		<div class="panel panel-default">
 			<div class="panel-heading">Your followers</div>
 		 	<div class="panel-body">
-		    	followers
+		    	<ul class="list-unstyled">
+		    		{% for follower in followers %}
+						<li><a href="{{ url_for('profile', user_id=follower.id) }}">{{follower.name}}</a></li>
+					{% endfor %}
+		    	</ul>
 			</div>
 		</div>
 	</div>
@@ -46,8 +54,8 @@
 		<h3>Posts by people you followed</h3>
 		<hr/>
 		<ul class="list-group">
-			{% for message in messages %}
-				<li class="list-group-item">{{message.writer}}: {{message.content}}</li>
+			{% for message in feed %}
+				<li class="list-group-item"><a href="{{ url_for('profile', user_id=message.writerid) }}">{{message.writer}}</a>: {{message.content}}</li>
 			{% endfor %}
 		</ul>
 	</div>

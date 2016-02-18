@@ -24,6 +24,9 @@ def home():
     return render_template(
         'index.html',
         messages=getMessagesBy(session['userid']),
+        feed=getMessagesFeed(session['userid']),
+        followees=getFollowees(session['userid']),
+        followers=getFollowers(session['userid']),
         username=session['username'],
         useremail=session['useremail']
     )
@@ -69,6 +72,16 @@ def logout():
     return redirect(url_for('home'))
 
 
+@app.route("/users")
+def users():
+    if 'userid' not in session:
+        return redirect(url_for('login'))
+        
+    return render_template(
+        'users.html',
+        users=getUsers(session['userid'])
+    )
+
 @app.route('/user/<int:user_id>')
 def profile(user_id):
     try:
@@ -95,6 +108,15 @@ def delete(user_id):
         return redirect(url_for('logout'))
     else:
         flash("An error has occured.", "danger")
+
+
+@app.route('/user/<int:user_id>/follow')
+def follow(user_id):
+    if user_follow_user(session['userid'], user_id):
+        flash("Follow user successful!", "success")
+    else:
+        flash("Failed to follow user.", "danger")
+    return redirect(url_for('home')) 
 
 
 @app.route('/', defaults={'path': ''})
@@ -174,7 +196,7 @@ def login_user(email, password):
 
 def post_message(userid, username, message):
     with open("db/messages", "a") as file:
-        file.write(userid + "\t" + username + "\t" + message.strip() + "\n")
+        file.write(userid + "\t" + username + "\t" + message.strip().replace('\n', ' ').replace('\t', ' ') + "\n")
         file.close
 
     flash("Successfully posted message.", "info")
@@ -187,15 +209,109 @@ def getMessagesBy(userid):
         with open("db/messages", "r") as file:
             for line in file:
                 attr = line.strip('\n').split("\t")
-                message = {}
-                message['writer'] = attr[1]
-                message['content'] = attr[2]
-                messages.append(message.copy())
+                if attr[0] == userid:
+                    message = {}
+                    message['writeid'] = attr[0]
+                    message['writer'] = attr[1]
+                    message['content'] = attr[2]
+                    messages.append(message.copy())
         messages.reverse()
     except:
         return []
 
     return messages
 
+
+def getMessagesFeed(userid):
+    messages = []
+    try:
+        followees = getFollowees(userid)
+        with open("db/messages", "r") as file:
+            for line in file:
+                attr = line.strip('\n').split("\t")
+                if any(followee['id'] == attr[0] for followee in followees):
+                    message = {}
+                    message['writerid'] = attr[0]
+                    message['writer'] = attr[1]
+                    message['content'] = attr[2]
+                    messages.append(message.copy())
+        messages.reverse()
+    except:
+        return []
+
+    return messages
+
+
+def getUsers(userid):
+    users = []
+    try:
+        followees = getFollowees(userid)
+        with open("db/user_index", "r") as file:
+            for line in file:
+                attr = line.strip('\n').split("\t")
+                if not attr[0] == userid:
+                    user = {}
+                    user['id'] = attr[0]
+                    user['email'] = attr[1]
+                    if any(followee['id'] == attr[0] for followee in followees):
+                        user['already_followed'] = True
+                    else:
+                        user['already_followed'] = False
+                    users.append(user.copy())
+    except:
+        return []
+    
+    return users
+
+
+def user_follow_user(follower, followee):
+    if not os.path.exists("db/follows"):
+        file = open("db/follows", "w")
+    else:
+        file = open("db/follows", "r+")
+    for line in file:
+        attr = line.strip('\n').split("\t")
+        print attr
+        if attr[0] == str(follower) and attr[1] == str(followee):
+            file.close()
+            return True
+    file.write(str(follower) + "\t" + str(followee) + "\n")
+    file.close()
+
+    return True
+
+
+def getFollowees(userid):
+    followees = []
+    try:
+        with open("db/follows", "r") as file:
+            for line in file:
+                attr = line.strip('\n').split("\t")
+                if attr[0] == userid:
+                    followee = {}
+                    followee['id'] = attr[1]
+                    followee['name'] = User(attr[1]).name
+                    followees.append(followee.copy())
+    except:
+        return []
+    
+    return followees
+
+
+def getFollowers(userid):
+    followers = []
+    try:
+        with open("db/follows", "r") as file:
+            for line in file:
+                attr = line.strip('\n').split("\t")
+                if attr[1] == userid:
+                    follower = {}
+                    follower['id'] = attr[0]
+                    follower['name'] = User(attr[0]).name
+                    followers.append(follower.copy())
+    except:
+        return []
+    
+    return followers
 
 app.run("127.0.0.1", 5000, debug=True)
