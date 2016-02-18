@@ -116,6 +116,15 @@ def follow(user_id):
         flash("Follow user successful!", "success")
     else:
         flash("Failed to follow user.", "danger")
+    return redirect(url_for('home'))
+
+
+@app.route('/user/<int:user_id>/unfollow')
+def unfollow(user_id):
+    if user_unfollow_user(session['userid'], user_id):
+        flash("You successfully unfollowed that user!", "success")
+    else:
+        flash("Failed to unfollow user.", "danger")
     return redirect(url_for('home')) 
 
 
@@ -271,7 +280,6 @@ def user_follow_user(follower, followee):
         file = open("db/follows", "r+")
     for line in file:
         attr = line.strip('\n').split("\t")
-        print attr
         if attr[0] == str(follower) and attr[1] == str(followee):
             file.close()
             return True
@@ -279,6 +287,25 @@ def user_follow_user(follower, followee):
     file.close()
 
     return True
+
+
+def user_unfollow_user(follower, followee):
+    if not os.path.exists("db/follows"):
+        return False
+    
+    file = open("db/follows", "r")
+    lines = file.readlines()
+    file.close()
+
+    file = open("db/follows", "w")
+    for line in lines:
+        attr = line.strip('\n').split("\t")
+        if not (attr[0] == str(follower) and attr[1] == str(followee)):
+            file.write(line)
+    file.close()
+
+    return True
+
 
 
 def getFollowees(userid):
