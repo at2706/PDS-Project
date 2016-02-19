@@ -27,10 +27,11 @@
     </div>
   </div>
 </div>
+{% elif following %}
+  <a class="btn btn-danger" href="{{ url_for('unfollow', user_id=user.id) }}">Unfollow</a>
 {% elif session['userid'] %}
   <a class="btn btn-primary" href="{{ url_for('follow', user_id=user.id) }}">Follow</a>
 {% endif %}
-
 
 <hr/>
 <div class="col-md-5">

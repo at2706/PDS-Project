@@ -40,9 +40,10 @@
 	<div class="col-md-5">
 		<h3>Posts by you</h3>
 		<hr/>
-		<form method="POST">
+		<form id="postForm" method="POST">
 			<div class="form-group">
-				<textarea class="form-control" rows="2" name="message" placeholder="What are you up to?"></textarea>
+				<textarea id="postInput" class="form-control" rows="2" name="message" placeholder="What are you up to?"></textarea>
+				<div>Character Count: <span id="charCounter">0</span>/100</div> 
 				<button type="submit" class="btn btn-primary btn-block btn-sm">Post</button>
 			</div>
 		</form>

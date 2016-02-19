@@ -6,7 +6,7 @@
 		{% block title %}{% endblock %}
 
 		<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
-		<link rel="stylesheet" type="text/css" href="static/css/style.css" />
+		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename = 'css/style.css') }}" />
 </head>
 
 <body>
@@ -47,7 +47,7 @@
 		<!-- Page Content -->
 		<div class="container">
 				<div class="row">
-						<div class="col-md-12">
+						<div id="messages" class="col-md-12">
 								{% with messages = get_flashed_messages(with_categories=true) %}
 										{% if messages %}
 												{% for category, message in messages %}
@@ -72,7 +72,7 @@
     </script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 		<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-		<script src="static/js/javascript.js"></script>
+		<script src="{{ url_for('static', filename="js/javascript.js") }}"></script>
 
 
 		{% block scripts %}{% endblock %}

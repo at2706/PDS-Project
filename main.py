@@ -76,28 +76,62 @@ def logout():
 def users():
     if 'userid' not in session:
         return redirect(url_for('login'))
-        
+
     return render_template(
         'users.html',
         users=getUsers(session['userid'])
     )
 
+
 @app.route('/user/<int:user_id>')
 def profile(user_id):
     try:
-        return render_template(
-            'user.html',
-            user=User(user_id),
-            current_user=(int(session['userid']) == user_id)
-        )
+        if session['userid']:
+            following = False
+            followees = getFollowees(session['userid'])
+            for followee in followees:
+                if int(followee['id']) == user_id:
+                    following = True
+                    break
+            return render_template(
+                'user.html',
+                user=User(user_id),
+                following=following,
+                current_user=(int(session['userid']) == user_id)
+            )
+        else:
+            return render_template(
+                'user.html',
+                user=User(user_id),
+                following=False,
+                current_user=False
+            )
     except Exception:
         abort(404)
 
 
-@app.route('/edit/<int:user_id>')
+@app.route('/edit/<int:user_id>', methods=['post', 'get'])
 def edit(user_id):
+    if int(session['userid']) != user_id:
+        abort(403)
+
+    if request.method == 'POST':
+        email = request.form["email"]
+        first_name = request.form["first_name"]
+        last_name = request.form["last_name"]
+        user = User(user_id)
+        if not (email or first_name or last_name):
+            flash("There are empty fields.", "warning")
+        user.data["email"] = email
+        user.data["name"] = first_name + " " + last_name
+        user.commit()
+        session["useremail"] = email
+        session["username"] = first_name + " " + last_name
+        return redirect(url_for('profile', user_id=user_id))
+
     return render_template(
-        'user_edit.html')
+        'user_edit.html',
+        form=request.form)
 
 
 @app.route('/delete/<int:user_id>')
@@ -125,18 +159,7 @@ def unfollow(user_id):
         flash("You successfully unfollowed that user!", "success")
     else:
         flash("Failed to unfollow user.", "danger")
-    return redirect(url_for('home')) 
-
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def catch_all(path):
-    try:
-        return render_template(
-            path + '.html'
-        )
-    except TemplateNotFound:
-        abort(404)
+    return redirect(url_for('home'))
 
 
 @app.errorhandler(400)
@@ -204,6 +227,9 @@ def login_user(email, password):
 
 
 def post_message(userid, username, message):
+    if len(message) > 100:
+        flash("Your message was too long. " + str(len(message)) + " Characters.", "warning")
+        return False
     with open("db/messages", "a") as file:
         file.write(userid + "\t" + username + "\t" + message.strip().replace('\n', ' ').replace('\t', ' ') + "\n")
         file.close
@@ -269,7 +295,7 @@ def getUsers(userid):
                     users.append(user.copy())
     except:
         return []
-    
+
     return users
 
 
@@ -292,7 +318,7 @@ def user_follow_user(follower, followee):
 def user_unfollow_user(follower, followee):
     if not os.path.exists("db/follows"):
         return False
-    
+
     file = open("db/follows", "r")
     lines = file.readlines()
     file.close()
@@ -305,7 +331,6 @@ def user_unfollow_user(follower, followee):
     file.close()
 
     return True
-
 
 
 def getFollowees(userid):
@@ -321,7 +346,7 @@ def getFollowees(userid):
                     followees.append(followee.copy())
     except:
         return []
-    
+
     return followees
 
 
@@ -338,7 +363,7 @@ def getFollowers(userid):
                     followers.append(follower.copy())
     except:
         return []
-    
+
     return followers
 
 app.run("127.0.0.1", 5000, debug=True)
