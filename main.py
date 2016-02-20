@@ -13,33 +13,32 @@ app.secret_key = os.urandom(24)
 @app.route("/", methods=['post', 'get'])
 @app.route("/home", methods=['post', 'get'])
 def home():
-    if 'userid' not in session:
+    if 'id' not in session:
         return redirect(url_for('login'))
 
     if request.method == 'POST':
         message = request.form['message']
-        if post_message(session['userid'], session['username'], message):
+        if post_message(session['id'], session['username'], message):
             return redirect(url_for('home'))
 
     return render_template(
         'index.html',
-        messages=getMessagesBy(session['userid']),
-        feed=getMessagesFeed(session['userid']),
-        followees=getFollowees(session['userid']),
-        followers=getFollowers(session['userid']),
-        username=session['username'],
-        useremail=session['useremail']
+        messages=getMessagesBy(session['id']),
+        feed=getMessagesFeed(session['id']),
+        followees=getFollowees(session['id']),
+        followers=getFollowers(session['id']),
+        user=User(session['id'])
     )
 
 
 @app.route("/register", methods=['post', 'get'])
 def register():
     if request.method == 'POST':
-        email = request.form["email"]
-        first_name = request.form["first_name"]
-        last_name = request.form["last_name"]
-        pwd1 = request.form["password1"]
-        pwd2 = request.form["password2"]
+        email = request.form['email']
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        pwd1 = request.form['password1']
+        pwd2 = request.form['password2']
         if create_user(email, first_name, last_name, pwd1, pwd2):
             return redirect(url_for('home'))
 
@@ -51,12 +50,12 @@ def register():
 
 @app.route("/login", methods=['post', 'get'])
 def login():
-    if 'userid' in session:
+    if 'id' in session:
         flash("You're already logged in!", "warning")
         return redirect(url_for('home'))
     if request.method == 'POST':
-        email = request.form["email"]
-        password = request.form["password"]
+        email = request.form['email']
+        password = request.form['password']
         if login_user(email, password):
             return redirect(url_for('home'))
 
@@ -74,35 +73,62 @@ def logout():
 
 @app.route("/users")
 def users():
-    if 'userid' not in session:
+    if 'id' not in session:
         return redirect(url_for('login'))
-        
+
     return render_template(
         'users.html',
-        users=getUsers(session['userid'])
+        users=getUsers(session['id'])
     )
+
 
 @app.route('/user/<int:user_id>')
 def profile(user_id):
+    if 'id' not in session:
+        return redirect(url_for('login'))
     try:
+        following = False
+        followees = getFollowees(session['id'])
+        for followee in followees:
+            if int(followee['id']) == user_id:
+                following = True
+                break
         return render_template(
             'user.html',
             user=User(user_id),
-            current_user=(int(session['userid']) == user_id)
+            following=following,
+            current_user=(int(session['id']) == user_id)
         )
     except Exception:
         abort(404)
 
 
-@app.route('/edit/<int:user_id>')
+@app.route('/edit/<int:user_id>', methods=['post', 'get'])
 def edit(user_id):
+    if int(session['id']) != user_id:
+        abort(403)
+
+    if request.method == 'POST':
+        email = request.form['email']
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        user = User(user_id)
+        if not (email or first_name or last_name):
+            flash("There are empty fields.", "warning")
+        user.data['email'] = email
+        user.data['name'] = first_name + " " + last_name
+        user.commit()
+        session['username'] = first_name + " " + last_name
+        return redirect(url_for('profile', user_id=user_id))
+
     return render_template(
-        'user_edit.html')
+        'user_edit.html',
+        form=request.form)
 
 
 @app.route('/delete/<int:user_id>')
 def delete(user_id):
-    if int(session['userid']) == user_id:
+    if int(session['id']) == user_id:
         User.delete(user_id)
         flash("User account has been removed!", "success")
         return redirect(url_for('logout'))
@@ -112,7 +138,7 @@ def delete(user_id):
 
 @app.route('/user/<int:user_id>/follow')
 def follow(user_id):
-    if user_follow_user(session['userid'], user_id):
+    if user_follow_user(session['id'], user_id):
         flash("Follow user successful!", "success")
     else:
         flash("Failed to follow user.", "danger")
@@ -121,22 +147,11 @@ def follow(user_id):
 
 @app.route('/user/<int:user_id>/unfollow')
 def unfollow(user_id):
-    if user_unfollow_user(session['userid'], user_id):
+    if user_unfollow_user(session['id'], user_id):
         flash("You successfully unfollowed that user!", "success")
     else:
         flash("Failed to unfollow user.", "danger")
-    return redirect(url_for('home')) 
-
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def catch_all(path):
-    try:
-        return render_template(
-            path + '.html'
-        )
-    except TemplateNotFound:
-        abort(404)
+    return redirect(url_for('home'))
 
 
 @app.errorhandler(400)
@@ -193,9 +208,8 @@ def login_user(email, password):
             attr = line.strip('\n').split("\t")
             if attr[1] == email and attr[2] == hashlib.sha512(password).hexdigest():
                 user = User(attr[0])
-                session['userid'] = user.id
-                session['username'] = user.name
-                session['useremail'] = user.email
+                session['id'] = user.data['id']
+                session['username'] = user.data['name']
                 flash("Logged in.", "success")
                 return True
 
@@ -203,22 +217,25 @@ def login_user(email, password):
     return False
 
 
-def post_message(userid, username, message):
+def post_message(user_id, username, message):
+    if len(message) > 100:
+        flash("Your message was too long. " + str(len(message)) + " Characters.", "warning")
+        return False
     with open("db/messages", "a") as file:
-        file.write(userid + "\t" + username + "\t" + message.strip().replace('\n', ' ').replace('\t', ' ') + "\n")
+        file.write(user_id + "\t" + username + "\t" + message.strip().replace('\n', ' ').replace('\t', ' ') + "\n")
         file.close
 
     flash("Successfully posted message.", "info")
     return True
 
 
-def getMessagesBy(userid):
+def getMessagesBy(user_id):
     messages = []
     try:
         with open("db/messages", "r") as file:
             for line in file:
                 attr = line.strip('\n').split("\t")
-                if attr[0] == userid:
+                if attr[0] == user_id:
                     message = {}
                     message['writeid'] = attr[0]
                     message['writer'] = attr[1]
@@ -231,10 +248,10 @@ def getMessagesBy(userid):
     return messages
 
 
-def getMessagesFeed(userid):
+def getMessagesFeed(user_id):
     messages = []
     try:
-        followees = getFollowees(userid)
+        followees = getFollowees(user_id)
         with open("db/messages", "r") as file:
             for line in file:
                 attr = line.strip('\n').split("\t")
@@ -251,14 +268,14 @@ def getMessagesFeed(userid):
     return messages
 
 
-def getUsers(userid):
+def getUsers(user_id):
     users = []
     try:
-        followees = getFollowees(userid)
+        followees = getFollowees(user_id)
         with open("db/user_index", "r") as file:
             for line in file:
                 attr = line.strip('\n').split("\t")
-                if not attr[0] == userid:
+                if not attr[0] == user_id:
                     user = {}
                     user['id'] = attr[0]
                     user['email'] = attr[1]
@@ -269,7 +286,7 @@ def getUsers(userid):
                     users.append(user.copy())
     except:
         return []
-    
+
     return users
 
 
@@ -292,7 +309,7 @@ def user_follow_user(follower, followee):
 def user_unfollow_user(follower, followee):
     if not os.path.exists("db/follows"):
         return False
-    
+
     file = open("db/follows", "r")
     lines = file.readlines()
     file.close()
@@ -307,38 +324,37 @@ def user_unfollow_user(follower, followee):
     return True
 
 
-
-def getFollowees(userid):
+def getFollowees(user_id):
     followees = []
     try:
         with open("db/follows", "r") as file:
             for line in file:
                 attr = line.strip('\n').split("\t")
-                if attr[0] == userid:
+                if attr[0] == user_id:
                     followee = {}
                     followee['id'] = attr[1]
-                    followee['name'] = User(attr[1]).name
+                    followee['name'] = User(attr[1]).data['name']
                     followees.append(followee.copy())
     except:
         return []
-    
+
     return followees
 
 
-def getFollowers(userid):
+def getFollowers(user_id):
     followers = []
     try:
         with open("db/follows", "r") as file:
             for line in file:
                 attr = line.strip('\n').split("\t")
-                if attr[1] == userid:
+                if attr[1] == user_id:
                     follower = {}
                     follower['id'] = attr[0]
-                    follower['name'] = User(attr[0]).name
+                    follower['name'] = User(attr[0]).data['name']
                     followers.append(follower.copy())
     except:
         return []
-    
+
     return followers
 
 app.run("127.0.0.1", 5000, debug=True)

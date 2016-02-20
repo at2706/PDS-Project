@@ -4,9 +4,8 @@ import os
 class User:
 
     def __init__(self, id):
-        self.id = id
         self.path = "db/users/" + str(id)
-        self.data = {}
+        self.data = {'id': id}
         try:
             with self.open_user() as user_file:
                 for line in user_file:
@@ -15,21 +14,21 @@ class User:
         except IOError:
             raise IOError
 
-        self.name = self.data['name']
-        self.email = self.data['email']
-
     def open_user(self, mode='r'):
         return open(self.path, mode)
 
     def commit(self):
-        with self.open_user('w') as file:
-            for key, value in self.data:
-                file.write(str(key) + str(value) + "\n")
+        password = User.delete(self.id)
+        with self.open_user('w+') as file:
+            for key, value in self.data.items():
+                file.write(str(key) + ":" + str(value) + "\n")
+        with open("db/user_index", "w") as file:
+            file.write(str(self.id) + "\t" + self.data['email'] + "\t" + password + "\n")
 
     @staticmethod
     def delete(id):
-        # Keep user info alive ?
-        # os.remove("db/users/" + str(id))
+        password = ""
+        os.remove("db/users/" + str(id))
         with open("db/user_index", "r") as file:
             users = file.readlines()
         with open("db/user_index", "w") as file:
@@ -37,3 +36,6 @@ class User:
                 attr = line.strip('\n').split("\t")
                 if int(attr[0]) != id:
                     file.write(line)
+                else:
+                    password = attr[2]
+        return password
