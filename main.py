@@ -119,6 +119,7 @@ def edit(user_id):
         user.data['name'] = first_name + " " + last_name
         user.commit()
         session['username'] = first_name + " " + last_name
+
         return redirect(url_for('profile', user_id=user_id))
 
     return render_template(
