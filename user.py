@@ -18,12 +18,12 @@ class User:
         return open(self.path, mode)
 
     def commit(self):
-        password = User.delete(self.id)
+        password = User.delete(self.data['id'])
         with self.open_user('w+') as file:
             for key, value in self.data.items():
                 file.write(str(key) + ":" + str(value) + "\n")
-        with open("db/user_index", "w") as file:
-            file.write(str(self.id) + "\t" + self.data['email'] + "\t" + password + "\n")
+        with open("db/user_index", "a") as file:
+            file.write(str(self.data['id']) + "\t" + self.data['email'] + "\t" + password + "\n")
 
     @staticmethod
     def delete(id):
@@ -34,7 +34,7 @@ class User:
         with open("db/user_index", "w") as file:
             for line in users:
                 attr = line.strip('\n').split("\t")
-                if int(attr[0]) != id:
+                if attr[0] != str(id):
                     file.write(line)
                 else:
                     password = attr[2]
