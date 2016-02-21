@@ -8,42 +8,50 @@
 	"buffers":
 	[
 		{
+			"file": "templates/user.html",
+			"settings":
+			{
+				"buffer_size": 1546,
+				"line_ending": "Windows"
+			}
+		},
+		{
 			"file": "main.py",
 			"settings":
 			{
-				"buffer_size": 1355,
+				"buffer_size": 10451,
 				"line_ending": "Windows"
 			}
 		},
 		{
-			"file": "templates/register.html",
+			"file": "user.py",
 			"settings":
 			{
-				"buffer_size": 1278,
+				"buffer_size": 1289,
 				"line_ending": "Windows"
 			}
 		},
 		{
-			"file": "templates/layout.html",
+			"file": "db/users/1",
 			"settings":
 			{
-				"buffer_size": 5892,
+				"buffer_size": 48,
 				"line_ending": "Windows"
 			}
 		},
 		{
-			"file": "templates/index.html",
+			"file": "db/users/2",
 			"settings":
 			{
-				"buffer_size": 505,
+				"buffer_size": 38,
 				"line_ending": "Windows"
 			}
 		},
 		{
-			"file": "static/content/style.css",
+			"file": "db/messages",
 			"settings":
 			{
-				"buffer_size": 63,
+				"buffer_size": 213,
 				"line_ending": "Windows"
 			}
 		}
@@ -189,15 +197,41 @@
 	},
 	"expanded_folders":
 	[
-		"/D/Users/andyt/Google Drive/PDS/project/",
-		"/D/Users/andyt/Google Drive/PDS/project//static",
-		"/D/Users/andyt/Google Drive/PDS/project//static/content",
-		"/D/Users/andyt/Google Drive/PDS/project//static/fonts",
-		"/D/Users/andyt/Google Drive/PDS/project//static/scripts",
-		"/D/Users/andyt/Google Drive/PDS/project//templates"
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project//.idea",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project//db",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project//db/users",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project//static",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project//templates"
 	],
 	"file_history":
 	[
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/main.py",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/templates/layout.html",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/db/users/1",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/templates/register.html",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/db/follows",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/templates/index.html",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/db/user_index",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/db/users/2",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/templates/login.html",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/db/messages",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/user.py",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/README.md",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/templates/user_edit.html",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/templates/error.html",
+		"/D/Users/andyt/Google Drive/PDS/PDS-Project/static/js/javascript.js",
+		"/C/Users/andyq/Google Drive/PDS/PDS-Project/user.py",
+		"/C/Users/andyq/Google Drive/PDS/PDS-Project/main.py",
+		"/C/Users/andyq/Google Drive/PDS/PDS-Project//db/users/1",
+		"/C/Users/andyq/Google Drive/PDS/PDS-Project/db/user_index",
+		"/C/Users/andyq/Google Drive/PDS/PDS-Project/db/users/7",
+		"/C/Users/andyq/Google Drive/PDS/PDS-Project/db/users/8",
+		"/C/Users/andyq/Google Drive/PDS/PDS-Project/templates/users.html",
+		"/C/Users/andyq/Google Drive/PDS/PDS-Project/static/js/javascript.js",
+		"/C/Users/andyq/Google Drive/PDS/PDS-Project/templates/index.html",
+		"/C/Users/andyq/Downloads/barter_site/barter/static/barter/javascript.js",
+		"/C/Users/andyq/Google Drive/PDS/PDS-Project/static/content/style.css",
 		"/D/Users/andyt/Downloads/barter_site-master/barter/views.py",
 		"/D/Users/andyt/Downloads/barter_site-master/barter/templates/base.html",
 		"/C/Users/andyt/AppData/Roaming/Sublime Text 3/Packages/SublimeCodeIntel/SublimeCodeIntel.sublime-settings",
@@ -227,9 +261,46 @@
 	},
 	"find_state":
 	{
-		"case_sensitive": false,
+		"case_sensitive": true,
 		"find_history":
 		[
+			"HEAD",
+			"User(",
+			"User",
+			"user.id",
+			"login_user",
+			"userid",
+			"user_id",
+			"{{",
+			"}}",
+			"  }}",
+			"}}",
+			"{{  ",
+			"{{",
+			"session['useremail",
+			"session['username",
+			"\"]",
+			"[\"",
+			"\"useremail\"",
+			"'userid'",
+			"\"userid\"",
+			"post_message",
+			"postform",
+			"index",
+			".name",
+			"user_index",
+			"create_user",
+			"register",
+			"edit",
+			"user.html",
+			"getFollowees",
+			"getUsers",
+			"user_follow_user",
+			"follow",
+			"user",
+			"getusers",
+			"user_unfollow",
+			"getusers",
 			"HEAD",
 			"register",
 			"message",
@@ -241,6 +312,13 @@
 		"regex": false,
 		"replace_history":
 		[
+			"user_id",
+			"{{ ",
+			" }}",
+			"{{ ",
+			"']",
+			"['",
+			"'id'"
 		],
 		"reverse": false,
 		"show_context": true,
@@ -251,31 +329,31 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 1,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "main.py",
+					"file": "templates/user.html",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1355,
+						"buffer_size": 1546,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								65,
-								66
+								1512,
+								1512
 							]
 						],
 						"settings":
 						{
 							"auto_complete": false,
-							"syntax": "Packages/Python/Python.sublime-syntax",
-							"tab_size": 4,
+							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"tab_size": 2,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
@@ -287,25 +365,55 @@
 				},
 				{
 					"buffer": 1,
-					"file": "templates/register.html",
+					"file": "main.py",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1278,
+						"buffer_size": 10451,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								81,
-								81
+								2752,
+								2711
 							]
 						],
 						"settings":
 						{
 							"auto_complete": false,
-							"syntax": "Packages/HTML/HTML.sublime-syntax",
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": -0.0,
+						"translation.y": 900.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "user.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1289,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								351,
+								351
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Python/Python.sublime-syntax",
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
@@ -313,63 +421,57 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "templates/layout.html",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 5892,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								5226,
-								5226
-							]
-						],
-						"settings":
-						{
-							"auto_complete": false,
-							"syntax": "Packages/HTML/HTML.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 1755.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
+					"stack_index": 3,
 					"type": "text"
 				},
 				{
 					"buffer": 3,
-					"file": "templates/index.html",
+					"file": "db/users/1",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 505,
+						"buffer_size": 48,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								169,
-								169
+								0,
+								0
 							]
 						],
 						"settings":
 						{
-							"auto_complete": false,
-							"syntax": "Packages/HTML/HTML.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "db/users/2",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 38,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
@@ -379,31 +481,31 @@
 					"type": "text"
 				},
 				{
-					"buffer": 4,
-					"file": "static/content/style.css",
+					"buffer": 5,
+					"file": "db/messages",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 63,
+						"buffer_size": 213,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								63,
-								63
+								50,
+								50
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/CSS/CSS.sublime-syntax"
+							"syntax": "Packages/Text/Plain text.tmLanguage"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 1,
 					"type": "text"
 				}
 			]
@@ -415,7 +517,7 @@
 	},
 	"input":
 	{
-		"height": 0.0
+		"height": 34.0
 	},
 	"layout":
 	{
@@ -456,7 +558,7 @@
 	"project": "project.sublime-project",
 	"replace":
 	{
-		"height": 42.0
+		"height": 62.0
 	},
 	"save_all_on_build": true,
 	"select_file":

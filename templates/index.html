@@ -1,20 +1,67 @@
 {% extends "layout.html" %}
 
+{% block title %}
+<title>Home</title>
+{% endblock %}
+
 {% block content %}
 <div class="row">
-    <!-- First Blog Post -->
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">Tweet Title</h3>
-            <p><span class="glyphicon glyphicon-time"></span> Posted on August 28, 2013 at 10:00 PM</p>
-        </div>
-        <div class="panel-body">
-            Panel content
-        </div>
-
-        <div class="panel-footer">Panel footer</div>
-    </div>
-
+	<div class="col-md-3">
+		<div class="panel panel-default">
+			<div class="panel-heading">Your profile</div>
+		 	<div class="panel-body">
+		    	<h3>{{ user.data.name }}</h3>
+				<span>{{ user.data.email }}</span>
+			</div>
+		</div>
+		<div class="panel panel-default">
+			<div class="panel-heading">People you're following</div>
+		 	<div class="panel-body">
+		    	<ul class="list-unstyled">
+		    		{% for followee in followees %}
+						<li>
+							<a href="{{ url_for('profile', user_id=followee.id) }}">{{ followee.name }}</a>
+						</li>
+					{% endfor %}
+		    	</ul>
+			</div>
+		</div>
+		<div class="panel panel-default">
+			<div class="panel-heading">Your followers</div>
+		 	<div class="panel-body">
+		    	<ul class="list-unstyled">
+		    		{% for follower in followers %}
+						<li><a href="{{ url_for('profile', user_id=follower.id) }}">{{ follower.name }}</a></li>
+					{% endfor %}
+		    	</ul>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-5">
+		<h3>Posts by you</h3>
+		<hr/>
+		<form id="postForm" method="POST">
+			<div class="form-group">
+				<textarea id="postInput" class="form-control" rows="2" name="message" placeholder="What are you up to?"></textarea>
+				<small>Characters: <span id="charCounter">0</span>/100</small> 
+				<button type="submit" class="btn btn-primary btn-block btn-sm">Post</button>
+			</div>
+		</form>
+		<ul class="list-group">
+			{% for message in messages %}
+				<li class="list-group-item">{{ message.content }}</li>
+			{% endfor %}
+		</ul>
+	</div>
+	<div class="col-md-4">
+		<h3>Posts by people you followed</h3>
+		<hr/>
+		<ul class="list-group">
+			{% for message in feed %}
+				<li class="list-group-item"><a href="{{ url_for('profile', user_id=message.writerid) }}">{{ message.writer }}</a>: {{ message.content }}</li>
+			{% endfor %}
+		</ul>
+	</div>
 </div>
 
 {% endblock %}

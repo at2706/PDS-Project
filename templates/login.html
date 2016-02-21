@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block title %}
+<title>Login</title>
+{% endblock %}
+
+{% block content %}
+
+<div class="login-page">
+		<div class="form">
+				<h2>Tweezer</h2>
+				<form class="login-form" method="POST">
+						<input class="form-control input-lg" id="email" name="email" type="email" placeholder="username" value="{{ form.email }}"/>
+						<input class="form-control input-lg" id="password" name="password" type="password" placeholder="password"/>
+						<button type="submit" class="btn btn-primary">login</button>
+						<small>Not registered? <a href="{{ url_for('register') }}">Create an account</a></small>
+				</form>
+		</div>
+</div>
+
+{% endblock %}
