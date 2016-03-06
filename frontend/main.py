@@ -1,10 +1,13 @@
 import os
 import hashlib
+import socket
 from flask import Flask, render_template, request, redirect, flash, url_for, abort, session
 from jinja2 import TemplateNotFound
 from werkzeug import secure_filename
 from user import User
 
+BACKEND_IP = "localhost"
+BACKEND_PORT = 13000
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -219,15 +222,26 @@ def login_user(email, password):
 
 
 def post_message(user_id, username, message):
-    if len(message) > 100:
-        flash("Your message was too long. " + str(len(message)) + " Characters.", "warning")
-        return False
-    with open("db/messages", "a") as file:
-        file.write(user_id + "\t" + username + "\t" + message.strip().replace('\n', ' ').replace('\t', ' ') + "\n")
-        file.close
+    sock = socket.socket()
+    sock.connect((BACKEND_IP, BACKEND_PORT))
 
-    flash("Successfully posted message.", "info")
+    sock.send("hello from flask - posting message")
+    data = sock.recv(4096)
+    print data
+    
+    sock.close()
+
     return True
+
+    # if len(message) > 100:
+    #     flash("Your message was too long. " + str(len(message)) + " Characters.", "warning")
+    #     return False
+    # with open("db/messages", "a") as file:
+    #     file.write(user_id + "\t" + username + "\t" + message.strip().replace('\n', ' ').replace('\t', ' ') + "\n")
+    #     file.close
+
+    # flash("Successfully posted message.", "info")
+    # return True
 
 
 def getMessagesBy(user_id):
