@@ -1,6 +1,7 @@
 import os
 import hashlib
 import socket
+import json
 from flask import Flask, render_template, request, redirect, flash, url_for, abort, session
 from jinja2 import TemplateNotFound
 from werkzeug import secure_filename
@@ -225,9 +226,20 @@ def post_message(user_id, username, message):
     sock = socket.socket()
     sock.connect((BACKEND_IP, BACKEND_PORT))
 
-    sock.send("hello from flask - posting message")
+    msg =  {
+        'request': 'post_message',
+        'data': {
+            'user_id': user_id,
+            'username': username,
+            'message': message
+        }
+    }
+
+    sock.send(json.dumps(msg))
     data = sock.recv(4096)
-    print data
+    recv_msg = json.loads(data.rstrip(' \t\r\n\0'))
+
+    print recv_msg
     
     sock.close()
 
