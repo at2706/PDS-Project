@@ -181,6 +181,18 @@ def error(e):
         message=msg), e.code
 
 
+# Send request (type: dictionary) to backend server
+# Returns reponse in json
+def sendRequest(request):
+    sock = socket.socket()
+    sock.connect((BACKEND_IP, BACKEND_PORT))
+    sock.send(json.dumps(request))
+    data = sock.recv(4096)
+    response = json.loads(data.rstrip(' \t\r\n\0'))
+    sock.close()
+    return response
+
+
 def create_user(email, first_name, last_name, pwd1, pwd2):
     if not email:
         flash("Invalid Email.", "danger")
@@ -223,11 +235,8 @@ def login_user(email, password):
 
 
 def post_message(user_id, username, message):
-    sock = socket.socket()
-    sock.connect((BACKEND_IP, BACKEND_PORT))
-
-    msg =  {
-        'request': 'post_message',
+    request =  {
+        'type': 'postMessage',
         'data': {
             'user_id': user_id,
             'username': username,
@@ -235,13 +244,9 @@ def post_message(user_id, username, message):
         }
     }
 
-    sock.send(json.dumps(msg))
-    data = sock.recv(4096)
-    recv_msg = json.loads(data.rstrip(' \t\r\n\0'))
+    response = sendRequest(request)
 
-    print recv_msg
-    
-    sock.close()
+    print response
 
     return True
 
