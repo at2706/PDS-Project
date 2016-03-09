@@ -112,7 +112,7 @@ json processRequest(json request) {
 		response = createUser(request["data"]["email"], request["data"]["first_name"],
 			request["data"]["last_name"], request["data"]["pwd1"], request["data"]["pwd2"]);
 	}
-	else if (request["type"] == "createUser") {
+	else if (request["type"] == "authUser") {
 		response = authUser(request["data"]["email"], request["data"]["password"]);
 	}
 	else if (request["type"] == "postMessage") {
