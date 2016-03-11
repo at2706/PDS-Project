@@ -187,8 +187,14 @@ def sendRequest(request):
     sock = socket.socket()
     sock.connect((BACKEND_IP, BACKEND_PORT))
     sock.send(json.dumps(request))
-    data = sock.recv(4096)
-    response = json.loads(data.rstrip(' \t\r\n\0'))
+
+    data = ""
+    data_segment = None
+    while data_segment != "":
+        data_segment = sock.recv(4096)
+        data += data_segment
+
+    response = json.loads(data)
     sock.close()
     return response
 
@@ -201,22 +207,24 @@ def create_user(email, first_name, last_name, pwd1, pwd2):
         flash("Passwords do not match.", "danger")
         return False
 
-    # open and write user to file
-    with open("db/user_index", "a+") as file:
-        id = 1
-        for id, line in enumerate(file, 1):
-            attr = line.strip('\n').split("\t")
-            if attr[1] == email:
-                flash("This email is already registered.", "warning")
-                return False
-            id = int(attr[0]) + 1
-        file.write(str(id) + "\t" + email + "\t" + hashlib.sha512(pwd1).hexdigest() + "\n")
-        with open("db/users/" + str(id), "w+") as user_file:
-            user_file.write("name:" + first_name + " " + last_name + "\n")
-            user_file.write("email:" + email + "\n")
+    request =  {
+        'type': 'createUser',
+        'data': {
+            'email': email,
+            'first_name': first_name,
+            'last_name': last_name,
+            'hashed_password': hashlib.sha512(pwd1).hexdigest()
+        }
+    }
 
-    flash("Successfully Created User.", "info")
-    return True
+    response = sendRequest(request)
+
+    if response['success'] == True:
+        flash("Successfully created user.", "info")
+        return True
+    else:
+        flash("Unable to create user. Error: " + response['error_message'], "danger")
+        return False
 
 
 def login_user(email, password):

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include "json.hpp"
 
@@ -17,8 +18,8 @@ using json = nlohmann::json;
 int setUpServer(int server_port);
 json processRequest(json request);
 
-json createUser(string email, string first_name, string last_name, string pwd1, string pwd2);
-json authUser(string email, string password);
+json createUser(string email, string first_name, string last_name, string hashed_password);
+json authUser(string email, string hashed_password);
 json postMessage(int user_id, string username, string message);
 json getMessagesBy(int user_id);
 json getMessagesFeed(int user_id);
@@ -59,9 +60,7 @@ int main(int argc, char const *argv[])
 		string response_encoded = response.dump();
 
 		//write out message
-		memset(&msg_buf, 0, sizeof(msg_buf));
-		strncpy(msg_buf, response_encoded.c_str(), sizeof(msg_buf));
-		if (write(sock_fd, msg_buf, sizeof(msg_buf)) == -1) {
+		if (write(sock_fd, response_encoded.c_str(), response_encoded.size()) == -1) {
 			perror("write failed");
 			exit(1);
 		}	
@@ -110,10 +109,10 @@ json processRequest(json request) {
 
 	if (request["type"] == "createUser") {
 		response = createUser(request["data"]["email"], request["data"]["first_name"],
-			request["data"]["last_name"], request["data"]["pwd1"], request["data"]["pwd2"]);
+			request["data"]["last_name"], request["data"]["hashed_password"]);
 	}
 	else if (request["type"] == "authUser") {
-		response = authUser(request["data"]["email"], request["data"]["password"]);
+		response = authUser(request["data"]["email"], request["data"]["hashed_password"]);
 	}
 	else if (request["type"] == "postMessage") {
 		int user_id = stoi(request["data"]["user_id"].get<string>());
@@ -123,14 +122,27 @@ json processRequest(json request) {
 	return response;
 }
 
-json createUser(string email, string first_name, string last_name, string pwd1, string pwd2) {
+json createUser(string email, string first_name, string last_name, string hashed_password) {
 	json response;
 
+	fstream fs;
+	fs.open("db/users", fstream::out | fstream::app);
+
+	if (fs.is_open()) {
+		fs << email << "\t" << hashed_password << "\t" << first_name << "\t" << last_name << endl;
+		response["success"] = true;
+	}
+	else {
+		response["success"] = false;
+		response["error_message"] = "failed to open file";
+	}
+
+	fs.close();
 	return response;
 }
 
 //corresponds with login_user
-json authUser(string email, string password) {
+json authUser(string email, string hashed_password) {
 	json response;
 
 	return response;
@@ -143,6 +155,5 @@ json postMessage(int user_id, string username, string message) {
 
 	json response;
 	response["success"] = true;
-
 	return response;
 }
