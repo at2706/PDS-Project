@@ -35,6 +35,7 @@ void iFlash(json &r, string message);
 void wFlash(json &r, string message);
 void dFlash(json &r, string message);
 
+void safe_open(fstream &fs, string path, ios_base::openmode mode);
 
 int main(int argc, char const *argv[]) {
 	//create socket
@@ -112,18 +113,23 @@ int setUpServer(int server_port) {
 json processRequest(json request) {
 	json response;
 
-	if (request["type"] == "createUser") {
-		response = createUser(request["data"]["email"], request["data"]["first_name"],
-			request["data"]["last_name"], request["data"]["hashed_password"]);
-	}
-	else if (request["type"] == "authUser") {
-		response = authUser(request["data"]["email"], request["data"]["hashed_password"]);
-	}
-	else if (request["type"] == "postMessage") {
-		int user_id = stoi(request["data"]["user_id"].get<string>());
-		response = postMessage(user_id, request["data"]["username"], request["data"]["message"]);
+	try{
+		if (request["type"] == "createUser") {
+			response = createUser(request["data"]["email"], request["data"]["first_name"],
+				request["data"]["last_name"], request["data"]["hashed_password"]);
+		}
+		else if (request["type"] == "authUser") {
+			response = authUser(request["data"]["email"], request["data"]["hashed_password"]);
+		}
+		else if (request["type"] == "postMessage") {
+			int user_id = stoi(request["data"]["user_id"].get<string>());
+			response = postMessage(user_id, request["data"]["username"], request["data"]["message"]);
+		}
 	}
 
+	catch(string e){
+		dFlash(response, "An exception has been thrown: " + e);
+	}
 	return response;
 }
 
@@ -131,15 +137,24 @@ json createUser(string email, string first_name, string last_name, string hashed
 	json response;
 
 	fstream fs;
-	fs.open("db/users", fstream::out | fstream::app);
+	safe_open(fs, "db/users", fstream::in);
 
-	if (!fs.is_open()) {
-		dFlash("Unable to create user: failed to open file");
-		return response;
+	int id = 0;
+	string l_email, l_hashed_password, l_first_name, l_last_name;
+
+	while(fs >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
+		if(email.compare(l_email) == 0){
+			dFlash(response, "That email is already taken.");
+			return response;
+		}
+		id++;
 	}
 
-	fs << email << "\t" << hashed_password << "\t" << first_name << "\t" << last_name << endl;
-	iFlash("Successfully created user.");
+	fs.close();
+	safe_open(fs, "db/users", fstream::out | fstream::app);
+
+	fs << id << "\t" << email << "\t" << hashed_password << "\t" << first_name << "\t" << last_name << endl;
+	iFlash(response, "Successfully created user.");
 	fs.close();
 	return response;
 }
@@ -147,6 +162,12 @@ json createUser(string email, string first_name, string last_name, string hashed
 //corresponds with login_user
 json authUser(string email, string hashed_password) {
 	json response;
+
+	fstream fs;
+	safe_open(fs, "db/users", fstream::in);
+
+	string line;
+	fs >> line;
 
 	return response;
 }
@@ -161,27 +182,35 @@ json postMessage(int user_id, string username, string message) {
 	return response;
 }
 
-void flash(json &r, string message, string type){
+void flash(json &r, string message, string type) {
 	r["fMessage"] = message;
 	r["fType"] = type;
 }
 
-void sFlash(json &r, string message){
+void sFlash(json &r, string message) {
 	flash(r, message, "success");
-	response["success"] = true;
+	r["success"] = true;
 }
 
-void iFlash(json &r, string message){
+void iFlash(json &r, string message) {
 	flash(r, message, "info");
-	response["success"] = true;
+	r["success"] = true;
 }
 
-void wFlash(json &r, string message){
+void wFlash(json &r, string message) {
 	flash(r, message, "warning");
-	response["success"] = false;
+	r["success"] = false;
 }
 
-void dFlash(json &r, string message){
+void dFlash(json &r, string message) {
 	flash(r, message, "danger");
-	response["success"] = false;
+	r["success"] = false;
+}
+
+void safe_open(fstream &fs, string path, ios_base::openmode mode){
+	fs.open(path, mode);
+
+	if (!fs.is_open()) {
+		throw "Error: failed to open file: \"" + path + "\"";
+	}
 }

@@ -7,7 +7,7 @@ $(document).ready(function(){
     //Registration Form Validation
     $('#password2').on('keyup focus', function() {
     	var p1 = $('#password1');
-    	if(p1.value != this.value){
+    	if(p1.val() != this.val()){
     		this.setCustomValidity("Passwords do not match!");
     	}
     	else

@@ -185,19 +185,23 @@ def error(e):
 # Returns reponse in json
 def sendRequest(request):
     sock = socket.socket()
-    sock.connect((BACKEND_IP, BACKEND_PORT))
-    sock.send(json.dumps(request))
+    try:
+        sock.connect((BACKEND_IP, BACKEND_PORT))
+        sock.send(json.dumps(request))
 
-    data = ""
-    data_segment = None
-    while data_segment != "":
-        data_segment = sock.recv(4096)
-        data += data_segment
+        data = ""
+        data_segment = None
+        while data_segment != "":
+            data_segment = sock.recv(4096)
+            data += data_segment
 
-    response = json.loads(data)
-    if all(key in response for key in ("fMessage", "fType")):
-        flash(response["fMessage"], response["fType"])
-    sock.close()
+        response = json.loads(data)
+        if all(key in response for key in ("fMessage", "fType")):
+            flash(response["fMessage"], response["fType"])
+        sock.close()
+    except socket.error:
+        flash("Backend is not Online !!!!", "warning")
+        response["success"] = False
     return response
 
 
@@ -218,18 +222,30 @@ def create_user(email, first_name, last_name, pwd1, pwd2):
 
 
 def login_user(email, password):
-    with open("db/user_index", "r") as file:
-        for line in file:
-            attr = line.strip('\n').split("\t")
-            if attr[1] == email and attr[2] == hashlib.sha512(password).hexdigest():
-                user = User(attr[0])
-                session['id'] = user.data['id']
-                session['username'] = user.data['name']
-                flash("Logged in.", "success")
-                return True
+    request = {
+        'type': 'authUser',
+        'data': {
+            'email': email,
+            'hashed_password': hashlib.sha512(password).hexdigest()
+        }
+    }
 
-    flash("Bad Login.", "warning")
-    return False
+    response = sendRequest(request)
+
+    return response['success']
+
+    # with open("db/user_index", "r") as file:
+    #     for line in file:
+    #         attr = line.strip('\n').split("\t")
+    #         if attr[1] == email and attr[2] == hashlib.sha512(password).hexdigest():
+    #             user = User(attr[0])
+    #             session['id'] = user.data['id']
+    #             session['username'] = user.data['name']
+    #             flash("Logged in.", "success")
+    #             return True
+
+    # flash("Bad Login.", "warning")
+    # return False
 
 
 def post_message(user_id, username, message):
