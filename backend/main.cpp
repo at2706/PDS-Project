@@ -28,6 +28,12 @@ json userUnfollowUser(int follower, int followee);
 json getFollowees(int user_id);
 json getFollowers(int user_id);
 
+void flash(json &r, string message, string type);
+void sFlash(json &r, string message);
+void iFlash(json &r, string message);
+void wFlash(json &r, string message);
+void dFlash(json &r, string message);
+
 
 int main(int argc, char const *argv[])
 {
@@ -144,5 +150,27 @@ json postMessage(int user_id, string username, string message) {
 	json response;
 	response["success"] = true;
 
+	sFlash(response, "test message");
 	return response;
+}
+
+void flash(json &r, string message, string type){
+	r["fMessage"] = message;
+	r["fType"] = type;
+}
+
+void sFlash(json &r, string message){
+	flash(r, message, "success");
+}
+
+void iFlash(json &r, string message){
+	flash(r, message, "info");
+}
+
+void wFlash(json &r, string message){
+	flash(r, message, "warning");
+}
+
+void dFlash(json &r, string message){
+	flash(r, message, "danger");
 }

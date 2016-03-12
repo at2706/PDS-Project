@@ -189,6 +189,9 @@ def sendRequest(request):
     sock.send(json.dumps(request))
     data = sock.recv(4096)
     response = json.loads(data.rstrip(' \t\r\n\0'))
+
+    if "fType" in response:
+        flash(response["fMessage"], response["fType"])
     sock.close()
     return response
 
