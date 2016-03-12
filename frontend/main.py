@@ -187,39 +187,34 @@ def sendRequest(request):
     sock = socket.socket()
     sock.connect((BACKEND_IP, BACKEND_PORT))
     sock.send(json.dumps(request))
-    data = sock.recv(4096)
-    response = json.loads(data.rstrip(' \t\r\n\0'))
 
-    if "fType" in response:
+    data = ""
+    data_segment = None
+    while data_segment != "":
+        data_segment = sock.recv(4096)
+        data += data_segment
+
+    response = json.loads(data)
+    if all(key in response for key in ("fMessage", "fType")):
         flash(response["fMessage"], response["fType"])
     sock.close()
     return response
 
 
 def create_user(email, first_name, last_name, pwd1, pwd2):
-    if not email:
-        flash("Invalid Email.", "danger")
-        return False
-    if pwd1 != pwd2:
-        flash("Passwords do not match.", "danger")
-        return False
+    request = {
+        'type': 'createUser',
+        'data': {
+            'email': email,
+            'first_name': first_name,
+            'last_name': last_name,
+            'hashed_password': hashlib.sha512(pwd1).hexdigest()
+        }
+    }
 
-    # open and write user to file
-    with open("db/user_index", "a+") as file:
-        id = 1
-        for id, line in enumerate(file, 1):
-            attr = line.strip('\n').split("\t")
-            if attr[1] == email:
-                flash("This email is already registered.", "warning")
-                return False
-            id = int(attr[0]) + 1
-        file.write(str(id) + "\t" + email + "\t" + hashlib.sha512(pwd1).hexdigest() + "\n")
-        with open("db/users/" + str(id), "w+") as user_file:
-            user_file.write("name:" + first_name + " " + last_name + "\n")
-            user_file.write("email:" + email + "\n")
+    response = sendRequest(request)
 
-    flash("Successfully Created User.", "info")
-    return True
+    return response['success']
 
 
 def login_user(email, password):
@@ -238,7 +233,7 @@ def login_user(email, password):
 
 
 def post_message(user_id, username, message):
-    request =  {
+    request = {
         'type': 'postMessage',
         'data': {
             'user_id': user_id,
