@@ -9,6 +9,7 @@ from user import User
 
 BACKEND_IP = "localhost"
 BACKEND_PORT = 13000
+DEBUGGING = True
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -17,6 +18,7 @@ app.secret_key = os.urandom(24)
 @app.route("/", methods=['post', 'get'])
 @app.route("/home", methods=['post', 'get'])
 def home():
+    debug("Home Fuction")
     if 'id' not in session:
         return redirect(url_for('login'))
 
@@ -37,6 +39,7 @@ def home():
 
 @app.route("/register", methods=['post', 'get'])
 def register():
+    debug("register Fuction")
     if request.method == 'POST':
         email = request.form['email']
         first_name = request.form['first_name']
@@ -54,6 +57,7 @@ def register():
 
 @app.route("/login", methods=['post', 'get'])
 def login():
+    debug("login Fuction")
     if 'id' in session:
         flash("You're already logged in!", "warning")
         return redirect(url_for('home'))
@@ -71,12 +75,14 @@ def login():
 
 @app.route("/logout")
 def logout():
+    debug("logout Fuction")
     session.clear()
     return redirect(url_for('home'))
 
 
 @app.route("/users")
 def users():
+    debug("users Fuction")
     if 'id' not in session:
         return redirect(url_for('login'))
 
@@ -88,6 +94,7 @@ def users():
 
 @app.route('/user/<int:user_id>')
 def profile(user_id):
+    debug("profile Fuction")
     if 'id' not in session:
         return redirect(url_for('login'))
 
@@ -107,6 +114,7 @@ def profile(user_id):
 
 @app.route('/edit/<int:user_id>', methods=['post', 'get'])
 def edit(user_id):
+    debug("edit Fuction")
     if int(session['id']) != user_id:
         abort(403)
 
@@ -131,6 +139,7 @@ def edit(user_id):
 
 @app.route('/delete/<int:user_id>')
 def delete(user_id):
+    debug("delete Fuction")
     if int(session['id']) == user_id:
         User.delete(user_id)
         flash("User account has been removed!", "success")
@@ -141,6 +150,7 @@ def delete(user_id):
 
 @app.route('/user/<int:user_id>/follow')
 def follow(user_id):
+    debug("follow Fuction")
     if user_follow_user(session['id'], user_id):
         flash("Follow user successful!", "success")
     else:
@@ -150,6 +160,7 @@ def follow(user_id):
 
 @app.route('/user/<int:user_id>/unfollow')
 def unfollow(user_id):
+    debug("unfollow Fuction")
     if user_unfollow_user(session['id'], user_id):
         flash("You successfully unfollowed that user!", "success")
     else:
@@ -182,6 +193,10 @@ def error(e):
 # Send request (type: dictionary) to backend server
 # Returns reponse in json
 def sendRequest(request):
+    debug("sendRequest Fuction")
+    debug("Request Sent:")
+    for key in request:
+        debug("\t" + str(key) + " : " + str(request[key]))
     sock = socket.socket()
     try:
         sock.connect((BACKEND_IP, BACKEND_PORT))
@@ -194,6 +209,10 @@ def sendRequest(request):
             data += data_segment
 
         response = json.loads(data)
+        debug("\nRequest Response:")
+        for key in response:
+            debug("\t" + str(key) + " : " + str(response[key]))
+        debug("\n")
         if all(key in response for key in ("fMessage", "fType")):
             for msg, type in zip(response["fMessage"], response["fType"]):
                 flash(msg, type)
@@ -210,6 +229,7 @@ def sendRequest(request):
 
 
 def create_user(email, first_name, last_name, pwd1, pwd2):
+    debug("create_user Fuction")
     request = {
         'type': 'createUser',
         'data': {
@@ -226,6 +246,7 @@ def create_user(email, first_name, last_name, pwd1, pwd2):
 
 
 def login_user(email, password):
+    debug("login_user Fuction")
     request = {
         'type': 'authUser',
         'data': {
@@ -245,6 +266,7 @@ def login_user(email, password):
 
 
 def get_user(user_id):
+    debug("get_user Fuction")
     request = {
         'type': 'getUser',
         'data': {
@@ -254,8 +276,6 @@ def get_user(user_id):
 
     response = sendRequest(request)
 
-    print response
-
     if response['success']:
         response['id'] = response['user_id']
 
@@ -263,6 +283,7 @@ def get_user(user_id):
 
 
 def post_message(user_id, username, message):
+    debug("post_message Fuction")
     request = {
         'type': 'postMessage',
         'data': {
@@ -274,41 +295,42 @@ def post_message(user_id, username, message):
 
     response = sendRequest(request)
 
-    print response
-
-    return True
-
-    # if len(message) > 100:
-    #     flash("Your message was too long. " + str(len(message)) + " Characters.", "warning")
-    #     return False
-    # with open("db/messages", "a") as file:
-    #     file.write(user_id + "\t" + username + "\t" + message.strip().replace('\n', ' ').replace('\t', ' ') + "\n")
-    #     file.close
-
-    # flash("Successfully posted message.", "info")
-    # return True
+    return response['success']
 
 
 def getMessagesBy(user_id):
-    messages = []
-    try:
-        with open("db/messages", "r") as file:
-            for line in file:
-                attr = line.strip('\n').split("\t")
-                if attr[0] == user_id:
-                    message = {}
-                    message['writeid'] = attr[0]
-                    message['writer'] = attr[1]
-                    message['content'] = attr[2]
-                    messages.append(message.copy())
-        messages.reverse()
-    except:
-        return []
+    debug("getMessagesBy Fuction")
+    request = {
+        'type': 'getMessagesBy',
+        'data': {
+            'user_id': user_id,
+        }
+    }
 
-    return messages
+    response = sendRequest(request)
+
+    return response['messages']
+
+    # messages = []
+    # try:
+    #     with open("db/messages", "r") as file:
+    #         for line in file:
+    #             attr = line.strip('\n').split("\t")
+    #             if attr[0] == user_id:
+    #                 message = {}
+    #                 message['writeid'] = attr[0]
+    #                 message['writer'] = attr[1]
+    #                 message['content'] = attr[2]
+    #                 messages.append(message.copy())
+    #     messages.reverse()
+    # except:
+    #     return []
+
+    # return messages
 
 
 def getMessagesFeed(user_id):
+    debug("getMessagesFeed Fuction")
     messages = []
     try:
         followees = getFollowees(user_id)
@@ -317,9 +339,9 @@ def getMessagesFeed(user_id):
                 attr = line.strip('\n').split("\t")
                 if any(followee['id'] == attr[0] for followee in followees):
                     message = {}
-                    message['writerid'] = attr[0]
-                    message['writer'] = attr[1]
-                    message['content'] = attr[2]
+                    message['user_id'] = attr[0]
+                    message['username'] = attr[1]
+                    message['message'] = attr[2]
                     messages.append(message.copy())
         messages.reverse()
     except:
@@ -329,6 +351,7 @@ def getMessagesFeed(user_id):
 
 
 def getUsers(user_id):
+    debug("getUsers Fuction")
     users = []
     try:
         followees = getFollowees(user_id)
@@ -351,6 +374,7 @@ def getUsers(user_id):
 
 
 def user_follow_user(follower, followee):
+    debug("user_follow_user Fuction")
     if not os.path.exists("db/follows"):
         file = open("db/follows", "w")
     else:
@@ -367,6 +391,7 @@ def user_follow_user(follower, followee):
 
 
 def user_unfollow_user(follower, followee):
+    debug("user_unfollow_user Fuction")
     if not os.path.exists("db/follows"):
         return False
 
@@ -385,6 +410,7 @@ def user_unfollow_user(follower, followee):
 
 
 def getFollowees(user_id):
+    debug("getFollowees Fuction")
     followees = []
     try:
         with open("db/follows", "r") as file:
@@ -402,6 +428,7 @@ def getFollowees(user_id):
 
 
 def getFollowers(user_id):
+    debug("getFollowers Fuction")
     followers = []
     try:
         with open("db/follows", "r") as file:
@@ -417,4 +444,9 @@ def getFollowers(user_id):
 
     return followers
 
-app.run("127.0.0.1", 5000, debug=True)
+
+def debug(message):
+    if DEBUGGING:
+        print message
+
+app.run("127.0.0.1", 5000, debug=DEBUGGING)

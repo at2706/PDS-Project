@@ -9,6 +9,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <math.h>
+#include <time.h>
 
 using namespace std;
 using json = nlohmann::json;
@@ -17,6 +18,7 @@ using json = nlohmann::json;
 #define BUFFER_SIZE 4096
 #define DEFAULT_PORT 13000
 #define USER_FILE "db/users"
+#define MSG_FILE "db/messages"
 
 // User data size: 256 bytes
 // Max Users: 9999 (2.56MB)
@@ -24,6 +26,9 @@ using json = nlohmann::json;
 #define ID_LEN 4
 #define EMAIL_CHAR_LIMIT 60
 #define NAME_CHAR_LIMIT 60
+
+// Message size: 178 bytes
+#define MSG_LEN 100
 
 int setUpServer(int server_port);
 json processRequest(json request);
@@ -50,6 +55,7 @@ void abort(int errcode);
 void safe_open(fstream &fs, string path, ios_base::openmode mode);
 string format_string(string &str, uint width);
 string format_int(uint i, uint width);
+string format_time(time_t t);
 
 int main(int argc, char const *argv[]) {
 	//create socket
@@ -139,15 +145,18 @@ json processRequest(json request) {
 		}
 
 		else if(request["type"] == "getUser"){
-			// This part breaks... WTF??
-			// int user_id = stoi(request["data"]["user_id"].get<string>());
 			int user_id = request["data"]["user_id"];
 			response = getUser(user_id);
 		}
 
 		else if(request["type"] == "postMessage"){
-			int user_id = stoi(request["data"]["user_id"].get<string>());
+			cout << "POST MESSAGE" << endl;
+			int user_id = request["data"]["user_id"];
 			response = postMessage(user_id, request["data"]["username"], request["data"]["message"]);
+		}
+		else if(request["type"] == "getMessagesBy"){
+			cout << "GET MESSAGES BY" << endl;
+			response = getMessagesBy(request["data"]["user_id"]);
 		}
 
 	}
@@ -195,8 +204,8 @@ json createUser(string email, string first_name, string last_name, string hashed
 
 	string name = first_name + " " + last_name;
 	fs  << format_int(id, ID_LEN) << "\t" 
-		<< format_string(email, EMAIL_CHAR_LIMIT)
-		<< "\t" << hashed_password << "\t"
+		<< format_string(email, EMAIL_CHAR_LIMIT) << "\t" 
+		<< hashed_password << "\t"
 		<< format_string(name, NAME_CHAR_LIMIT)
 		<< endl;
 	iFlash(response, "Successfully created user.");
@@ -259,12 +268,61 @@ json getUser(int user_id){
 }
 
 json postMessage(int user_id, string username, string message) {
-	cout << "posterID: " << user_id << endl;
-	cout << "poster: " << username << endl;
-	cout << "message: " << message << endl;
-
 	json response;
-	response["success"] = true;
+
+	int length = message.length();
+	if(length > MSG_LEN){
+		wFlash(response, "Your message was too long. " + to_string(length) + " characters.");
+		return response;
+	}
+
+	time_t current_time = time(NULL);
+	
+	{
+		cout << "current time: " << current_time <<endl;
+		cout << "posterID: " << user_id << endl;
+		cout << "poster: " << username << endl;
+		cout << "message: " << message << endl;
+	}
+
+	fstream fs;
+	safe_open(fs, MSG_FILE, fstream::out | fstream::app);
+
+	fs  << current_time << "\t" 
+		<< format_int(user_id, ID_LEN) << "\t" 
+		<< format_string(username, NAME_CHAR_LIMIT) << "\t"
+		<< format_string(message, MSG_LEN)
+		<< endl;
+
+	fs.close();
+	iFlash(response, "Message posted.");
+	return response;
+}
+
+json getMessagesBy(int user_id){
+	json response;
+	json messages;
+
+	fstream fs;
+	safe_open(fs, MSG_FILE, fstream::in);
+
+	int timestamp, l_id;
+	string l_first_name, l_last_name, l_message;
+
+	while(fs >> timestamp >> l_id >> l_first_name >> l_last_name >> l_message){
+		if(user_id == l_id){
+			json message;
+			message["time"] = (timestamp);
+			message["user_id"] = (l_id);
+			message["first_name"] = (l_first_name);
+			message["last_name"] = (l_last_name);
+			message["message"] = (l_message);
+			messages.push_back(message);
+		}
+	}
+	response["messages"] = messages;
+
+	fs.close();
 	return response;
 }
 
@@ -324,3 +382,11 @@ string format_int(uint i, uint width){
 
 	return ss.str();
 }
+
+// string format_time(time_t t){
+// 	// Format: DD/MM/YY HH:MM:SS
+// 	tm *utc = gmtime(&t);
+// 	string str;
+
+// 	return str;
+// }
