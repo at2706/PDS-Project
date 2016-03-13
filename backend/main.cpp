@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include "json.hpp"
 
@@ -7,6 +8,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <math.h>
 
 using namespace std;
 using json = nlohmann::json;
@@ -14,6 +16,14 @@ using json = nlohmann::json;
 #define	LISTENQ 1024
 #define BUFFER_SIZE 4096
 #define DEFAULT_PORT 13000
+#define USER_FILE "db/users"
+
+// User data size: 256 bytes
+// Max Users: 9999 (2.56MB)
+// Character limits also enforced in javascript
+#define ID_LEN 4
+#define EMAIL_CHAR_LIMIT 60
+#define NAME_CHAR_LIMIT 60
 
 int setUpServer(int server_port);
 json processRequest(json request);
@@ -29,13 +39,15 @@ json userUnfollowUser(int follower, int followee);
 json getFollowees(int user_id);
 json getFollowers(int user_id);
 
-void flash(json &r, string message, string type);
-void sFlash(json &r, string message);
-void iFlash(json &r, string message);
-void wFlash(json &r, string message);
-void dFlash(json &r, string message);
+void flash(json &r,  const string &message, const string &type);
+void sFlash(json &r, const string &message);
+void iFlash(json &r, const string &message);
+void wFlash(json &r, const string &message);
+void dFlash(json &r, const string &message);
 
 void safe_open(fstream &fs, string path, ios_base::openmode mode);
+string format_string(string &str, uint width);
+string format_int(uint i, uint width);
 
 int main(int argc, char const *argv[]) {
 	//create socket
@@ -127,8 +139,13 @@ json processRequest(json request) {
 		}
 	}
 
-	catch(string e){
-		dFlash(response, "An exception has been thrown: " + e);
+	catch(char const* e){
+		string err_msg = "An exception has been thrown: ";
+		err_msg += e;
+		dFlash(response, err_msg);
+	}
+	catch(...){
+		dFlash(response, "An exception has been thrown: UNKNOWN");
 	}
 	return response;
 }
@@ -137,12 +154,13 @@ json createUser(string email, string first_name, string last_name, string hashed
 	json response;
 
 	fstream fs;
-	safe_open(fs, "db/users", fstream::in);
+	safe_open(fs, USER_FILE, fstream::in);
 
 	int id = 0;
+	int l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
-	while(fs >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
+	while(fs >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
 		if(email.compare(l_email) == 0){
 			dFlash(response, "That email is already taken.");
 			return response;
@@ -151,9 +169,14 @@ json createUser(string email, string first_name, string last_name, string hashed
 	}
 
 	fs.close();
-	safe_open(fs, "db/users", fstream::out | fstream::app);
+	safe_open(fs, USER_FILE, fstream::out | fstream::app);
 
-	fs << id << "\t" << email << "\t" << hashed_password << "\t" << first_name << "\t" << last_name << endl;
+	string name = first_name + " " + last_name;
+	fs  << format_int(id, ID_LEN) << "\t" 
+		<< format_string(email, EMAIL_CHAR_LIMIT)
+		<< "\t" << hashed_password << "\t"
+		<< format_string(name, NAME_CHAR_LIMIT)
+		<< endl;
 	iFlash(response, "Successfully created user.");
 	fs.close();
 	return response;
@@ -164,11 +187,19 @@ json authUser(string email, string hashed_password) {
 	json response;
 
 	fstream fs;
-	safe_open(fs, "db/users", fstream::in);
+	safe_open(fs, USER_FILE, fstream::in);
 
-	string line;
-	fs >> line;
+	int l_id;
+	string l_email, l_hashed_password, l_first_name, l_last_name;
 
+	while(fs >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
+		if(email.compare(l_email) == 0){
+			dFlash(response, "That email is already taken.");
+			return response;
+		}
+	}
+
+	wFlash(response, "Bad log in.");
 	return response;
 }
 
@@ -182,35 +213,55 @@ json postMessage(int user_id, string username, string message) {
 	return response;
 }
 
-void flash(json &r, string message, string type) {
-	r["fMessage"] = message;
-	r["fType"] = type;
+void flash(json &r,  const string &message, const string &type) {
+	r["fMessage"].push_back(message);
+	r["fType"].push_back(type);
 }
 
-void sFlash(json &r, string message) {
+void sFlash(json &r, const string &message) {
 	flash(r, message, "success");
 	r["success"] = true;
 }
 
-void iFlash(json &r, string message) {
+void iFlash(json &r, const string &message) {
 	flash(r, message, "info");
 	r["success"] = true;
 }
 
-void wFlash(json &r, string message) {
+void wFlash(json &r, const string &message) {
 	flash(r, message, "warning");
 	r["success"] = false;
 }
 
-void dFlash(json &r, string message) {
+void dFlash(json &r, const string &message) {
 	flash(r, message, "danger");
 	r["success"] = false;
 }
 
-void safe_open(fstream &fs, string path, ios_base::openmode mode){
+void safe_open(fstream &fs, string path, ios_base::openmode mode) {
 	fs.open(path, mode);
 
 	if (!fs.is_open()) {
 		throw "Error: failed to open file: \"" + path + "\"";
 	}
+}
+
+string format_string(string &str, uint width){
+	if(str.length() > width)
+		throw "Error: Format string too long.";
+
+	str.resize(width, ' ');
+	return str;
+}
+
+string format_int(uint i, uint width){
+	if(i > pow(10, width) - 1)
+		throw "Error: Format int too long.";
+	stringstream ss;
+	ss.width(width);
+	ss.fill('0');
+	//int Align Left
+	ss << right << i;
+
+	return ss.str();
 }

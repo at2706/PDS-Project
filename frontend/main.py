@@ -197,11 +197,12 @@ def sendRequest(request):
 
         response = json.loads(data)
         if all(key in response for key in ("fMessage", "fType")):
-            flash(response["fMessage"], response["fType"])
+            for msg, type in zip(response["fMessage"], response["fType"]):
+                flash(msg, type)
         sock.close()
     except socket.error:
-        flash("Backend is not Online !!!!", "warning")
-        response["success"] = False
+        flash("Could not connect to backend !!!!", "warning")
+        response = {'success' : False}
     return response
 
 
