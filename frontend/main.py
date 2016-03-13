@@ -31,7 +31,7 @@ def home():
         feed=getMessagesFeed(session['id']),
         followees=getFollowees(session['id']),
         followers=getFollowers(session['id']),
-        user=User(session['id'])
+        user=session
     )
 
 
@@ -90,21 +90,19 @@ def users():
 def profile(user_id):
     if 'id' not in session:
         return redirect(url_for('login'))
-    try:
-        following = False
-        followees = getFollowees(session['id'])
-        for followee in followees:
-            if int(followee['id']) == user_id:
-                following = True
-                break
-        return render_template(
-            'user.html',
-            user=User(user_id),
-            following=following,
-            current_user=(int(session['id']) == user_id)
-        )
-    except Exception:
-        abort(404)
+
+    following = False
+    # followees = getFollowees(session['id'])
+    # for followee in followees:
+    #     if int(followee['id']) == user_id:
+    #         following = True
+    #         break
+    return render_template(
+        'user.html',
+        user=get_user(user_id),
+        following=following,
+        current_user=(int(session['id']) == user_id)
+    )
 
 
 @app.route('/edit/<int:user_id>', methods=['post', 'get'])
@@ -199,10 +197,15 @@ def sendRequest(request):
         if all(key in response for key in ("fMessage", "fType")):
             for msg, type in zip(response["fMessage"], response["fType"]):
                 flash(msg, type)
-        sock.close()
+
+        if "errcode" in response:
+            abort(response["errcode"])
     except socket.error:
         flash("Could not connect to backend !!!!", "warning")
-        response = {'success' : False}
+        response = {'success': False}
+    finally:
+        sock.close()
+
     return response
 
 
@@ -233,20 +236,30 @@ def login_user(email, password):
 
     response = sendRequest(request)
 
+    if response['success']:
+        session['id'] = response['user_id']
+        session['username'] = response['first_name'] + " " + response['last_name']
+        session['email'] = response['email']
+
     return response['success']
 
-    # with open("db/user_index", "r") as file:
-    #     for line in file:
-    #         attr = line.strip('\n').split("\t")
-    #         if attr[1] == email and attr[2] == hashlib.sha512(password).hexdigest():
-    #             user = User(attr[0])
-    #             session['id'] = user.data['id']
-    #             session['username'] = user.data['name']
-    #             flash("Logged in.", "success")
-    #             return True
 
-    # flash("Bad Login.", "warning")
-    # return False
+def get_user(user_id):
+    request = {
+        'type': 'getUser',
+        'data': {
+            'user_id': user_id
+        }
+    }
+
+    response = sendRequest(request)
+
+    print response
+
+    if response['success']:
+        response['id'] = response['user_id']
+
+    return response
 
 
 def post_message(user_id, username, message):

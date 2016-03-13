@@ -30,6 +30,7 @@ json processRequest(json request);
 
 json createUser(string email, string first_name, string last_name, string hashed_password);
 json authUser(string email, string hashed_password);
+json getUser(int user_id);
 json postMessage(int user_id, string username, string message);
 json getMessagesBy(int user_id);
 json getMessagesFeed(int user_id);
@@ -44,6 +45,7 @@ void sFlash(json &r, const string &message);
 void iFlash(json &r, const string &message);
 void wFlash(json &r, const string &message);
 void dFlash(json &r, const string &message);
+void abort(int errcode);
 
 void safe_open(fstream &fs, string path, ios_base::openmode mode);
 string format_string(string &str, uint width);
@@ -126,26 +128,46 @@ json processRequest(json request) {
 	json response;
 
 	try{
-		if (request["type"] == "createUser") {
+
+		if(request["type"] == "createUser"){
 			response = createUser(request["data"]["email"], request["data"]["first_name"],
 				request["data"]["last_name"], request["data"]["hashed_password"]);
 		}
-		else if (request["type"] == "authUser") {
+
+		else if(request["type"] == "authUser"){
 			response = authUser(request["data"]["email"], request["data"]["hashed_password"]);
 		}
-		else if (request["type"] == "postMessage") {
+
+		else if(request["type"] == "getUser"){
+			// This part breaks... WTF??
+			// int user_id = stoi(request["data"]["user_id"].get<string>());
+			int user_id = request["data"]["user_id"];
+			response = getUser(user_id);
+		}
+
+		else if(request["type"] == "postMessage"){
 			int user_id = stoi(request["data"]["user_id"].get<string>());
 			response = postMessage(user_id, request["data"]["username"], request["data"]["message"]);
 		}
-	}
 
+	}
+	catch(int errcode){
+		response.clear();
+		response["success"] = false;
+		response["errcode"] = errcode;
+	}
 	catch(char const* e){
+		response.clear();
 		string err_msg = "An exception has been thrown: ";
 		err_msg += e;
 		dFlash(response, err_msg);
 	}
-	catch(...){
-		dFlash(response, "An exception has been thrown: UNKNOWN");
+	catch(exception &e){
+		response.clear();
+		string err_msg = "An exception has been thrown: ";
+		err_msg += e.what();
+		cout << err_msg << endl;
+		dFlash(response, err_msg);
 	}
 	return response;
 }
@@ -193,13 +215,46 @@ json authUser(string email, string hashed_password) {
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
 	while(fs >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
-		if(email.compare(l_email) == 0){
-			dFlash(response, "That email is already taken.");
+		if(email.compare(l_email) == 0 && hashed_password.compare(l_hashed_password) == 0){
+			response["user_id"] = l_id;
+			response["email"] = l_email;
+			response["first_name"] = l_first_name;
+			response["last_name"] = l_last_name;
+			sFlash(response, "Successfully Logged in.");
+			fs.close();
 			return response;
 		}
 	}
 
 	wFlash(response, "Bad log in.");
+	fs.close();
+	return response;
+}
+
+json getUser(int user_id){
+	json response;
+
+	fstream fs;
+	safe_open(fs, USER_FILE, fstream::in);
+
+	int l_id;
+	string l_email, l_hashed_password, l_first_name, l_last_name;
+
+	while(fs >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
+		if(user_id == l_id){
+			response["user_id"] = l_id;
+			response["email"] = l_email;
+			response["first_name"] = l_first_name;
+			response["last_name"] = l_last_name;
+
+			fs.close();
+			response["success"] = true;
+			return response;
+		}
+	}
+
+	fs.close();
+	abort(401);
 	return response;
 }
 
@@ -238,6 +293,10 @@ void dFlash(json &r, const string &message) {
 	r["success"] = false;
 }
 
+void abort(int errcode){
+	throw errcode;
+}
+
 void safe_open(fstream &fs, string path, ios_base::openmode mode) {
 	fs.open(path, mode);
 
@@ -256,7 +315,7 @@ string format_string(string &str, uint width){
 
 string format_int(uint i, uint width){
 	if(i > pow(10, width) - 1)
-		throw "Error: Format int too long.";
+		throw "Error: Format int too big.";
 	stringstream ss;
 	ss.width(width);
 	ss.fill('0');
