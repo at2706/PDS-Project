@@ -36,6 +36,7 @@ int setUpServer(int server_port);
 json processRequest(json request);
 
 json createUser(string email, string first_name, string last_name, string hashed_password);
+json deleteUser(int user_id, string hashed_password);
 json authUser(string email, string hashed_password);
 json getUser(int user_id);
 json postMessage(int user_id, string username, string message);
@@ -141,6 +142,10 @@ json processRequest(json request) {
 				request["data"]["last_name"], request["data"]["hashed_password"]);
 		}
 
+		else if(request["type"] == "deleteUser"){
+			response = deleteUser(request["data"]["user_id"], request["data"]["hashed_password"]);
+		}
+
 		else if(request["type"] == "authUser"){
 			response = authUser(request["data"]["email"], request["data"]["hashed_password"]);
 		}
@@ -167,6 +172,10 @@ json processRequest(json request) {
 			response = userUnfollowUser(request["data"]["follower"], request["data"]["followee"]);
 		}
 
+		else{
+			cout << "Request type could not be processed." << endl;
+		}
+
 	}
 	catch(int errcode){
 		response.clear();
@@ -191,33 +200,93 @@ json processRequest(json request) {
 
 json createUser(string email, string first_name, string last_name, string hashed_password) {
 	json response;
+	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 4;
 
-	fstream fs;
-	safe_open(fs, USER_FILE, fstream::in);
+	string line, empty_line;
+	empty_line.resize(line_len - 1, '*');
 
-	int id = 0;
-	int l_id;
+
+	int e_pos = -1, id = 0, l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
-	while(fs >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
+	fstream fs;
+	safe_open(fs, USER_FILE, fstream::in | fstream::out);
+
+	while(getline(fs, line)){
+		if(line == empty_line){
+			if(e_pos == -1){
+				e_pos = fs.tellg();
+				e_pos -= line_len;
+			}
+			continue;
+		}
+
+		stringstream ss(line);
+		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
+		if(id < l_id) id = l_id;
 		if(email.compare(l_email) == 0){
 			dFlash(response, "That email is already taken.");
 			return response;
 		}
-		id++;
+
 	}
 
-	fs.close();
-	safe_open(fs, USER_FILE, fstream::out | fstream::app);
+	fs.clear();
+
+	if(e_pos == -1)
+		fs.seekp(0, fstream::end);
+	else{
+		fs.seekp(e_pos);
+	}
 
 	string name = first_name + " " + last_name;
-	fs  << format_int(id, ID_LEN) << "\t" 
+	fs  << format_int(id + 1, ID_LEN) << "\t" 
 		<< format_string(email, EMAIL_CHAR_LIMIT) << "\t" 
 		<< hashed_password << "\t"
 		<< format_string(name, NAME_CHAR_LIMIT)
 		<< endl;
-	iFlash(response, "Successfully created user.");
 	fs.close();
+
+	iFlash(response, "Successfully created user.");
+	return response;
+}
+
+json deleteUser(int user_id, string hashed_password){
+	json response;
+	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 4;
+
+	string line, empty_line;
+	empty_line.resize(line_len - 1, '*');
+
+	int e_pos = -1, l_id;
+	string l_email, l_hashed_password, l_first_name, l_last_name;
+
+	fstream fs;
+	safe_open(fs, USER_FILE, fstream::in | fstream::out);
+
+	while(getline(fs, line)){
+		stringstream ss(line);
+		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
+		if(user_id == l_id){
+			if(hashed_password.compare(l_hashed_password) == 0){
+				e_pos = fs.tellg();
+				e_pos -= line_len;
+				fs.clear();
+				fs.seekp(e_pos);
+				fs << empty_line;
+				fs.close();
+				sFlash(response, "Successfully deleted User.");
+				return response;
+			}
+			else{
+				wFlash(response, "Incorrect password.");
+				return response;
+			}
+		}
+	}
+	fs.close();
+
+	dFlash(response, "User does not exist.");
 	return response;
 }
 
@@ -337,8 +406,7 @@ json userFollowUser(int follower, int followee){
 	string line, empty_line;
 	empty_line.resize(line_len - 1, '*');
 
-	int e_pos = -1;
-	int l_follower, l_followee;
+	int e_pos = -1, l_follower, l_followee;
 
 	fstream fs;
 	safe_open(fs, FLW_FILE, fstream::in | fstream::out);
@@ -367,8 +435,6 @@ json userFollowUser(int follower, int followee){
 		fs.seekp(e_pos);
 	}
 
-
-	cout << fs.tellp() << endl;
 	fs  << format_int(follower, ID_LEN) << "\t" 
 		<< format_int(followee, ID_LEN) << endl;
 	fs.close();
@@ -395,7 +461,7 @@ json userUnfollowUser(int follower, int followee){
 		ss >> l_follower >> l_followee;
 		if(follower == l_follower && followee == l_followee){
 			e_pos = fs.tellg();
-			e_pos -= line_len; // Go back to beginning of line.
+			e_pos -= line_len;
 			fs.clear();
 			fs.seekp(e_pos);
 			fs << empty_line;

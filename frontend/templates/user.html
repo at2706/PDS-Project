@@ -20,9 +20,19 @@
         <h4 class="modal-title" id="myModalLabel">Confirm Delete</h4>
       </div>
       <div class="modal-body">
-        <p>Are you sure you want to delete your account?</p>
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <a type="button" class="btn btn-danger" href="{{ url_for('delete', user_id = user.id) }}">delete</a>
+
+        <form class="form-inline" method="POST" action="">
+
+          <p>Are you sure you want to delete your account?</p>
+          <div>
+              <label for="password">Password</label>
+              <input required type="password" class="form-control" id="password" name="password" placeholder="Password">
+          </div>
+          <hr>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+
       </div>
     </div>
   </div>

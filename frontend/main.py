@@ -92,7 +92,7 @@ def users():
     )
 
 
-@app.route('/user/<int:user_id>')
+@app.route('/user/<int:user_id>', methods=['post', 'get'])
 def profile(user_id):
     debug("profile Fuction")
     if 'id' not in session:
@@ -104,6 +104,15 @@ def profile(user_id):
     #     if int(followee['id']) == user_id:
     #         following = True
     #         break
+
+    if request.method == 'POST':
+        password = request.form['password']
+        if session['id'] != user_id:
+            abort(401)
+
+        if delete_user(user_id, password):
+            return redirect(url_for('logout'))
+
     return render_template(
         'user.html',
         user=get_user(user_id),
@@ -137,20 +146,12 @@ def edit(user_id):
         form=request.form)
 
 
-@app.route('/delete/<int:user_id>')
-def delete(user_id):
-    debug("delete Fuction")
-    if int(session['id']) == user_id:
-        User.delete(user_id)
-        flash("User account has been removed!", "success")
-        return redirect(url_for('logout'))
-    else:
-        flash("An error has occured.", "danger")
-
-
 @app.route('/user/<int:user_id>/follow')
 def follow(user_id):
     debug("follow Fuction")
+    if 'id' not in session:
+        return redirect(url_for('login'))
+
     user_follow_user(session['id'], user_id)
     return redirect(url_for('home'))
 
@@ -158,6 +159,9 @@ def follow(user_id):
 @app.route('/user/<int:user_id>/unfollow')
 def unfollow(user_id):
     debug("unfollow Fuction")
+    if 'id' not in session:
+        return redirect(url_for('login'))
+
     user_unfollow_user(session['id'], user_id)
     return redirect(url_for('home'))
 
@@ -239,6 +243,21 @@ def create_user(email, first_name, last_name, pwd1, pwd2):
     return response['success']
 
 
+def delete_user(user_id, pwd):
+    debug("delete_user Fuction")
+    request = {
+        'type': 'deleteUser',
+        'data': {
+            'user_id': user_id,
+            'hashed_password': hashlib.sha512(pwd).hexdigest()
+        }
+    }
+
+    response = sendRequest(request)
+
+    return response['success']
+
+
 def login_user(email, password):
     debug("login_user Fuction")
     request = {
@@ -302,6 +321,9 @@ def getMessagesBy(user_id):
     }
 
     response = sendRequest(request)
+
+    if response['messages'] is None:
+        return []
 
     return response['messages']
 
