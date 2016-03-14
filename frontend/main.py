@@ -151,20 +151,14 @@ def delete(user_id):
 @app.route('/user/<int:user_id>/follow')
 def follow(user_id):
     debug("follow Fuction")
-    if user_follow_user(session['id'], user_id):
-        flash("Follow user successful!", "success")
-    else:
-        flash("Failed to follow user.", "danger")
+    user_follow_user(session['id'], user_id)
     return redirect(url_for('home'))
 
 
 @app.route('/user/<int:user_id>/unfollow')
 def unfollow(user_id):
     debug("unfollow Fuction")
-    if user_unfollow_user(session['id'], user_id):
-        flash("You successfully unfollowed that user!", "success")
-    else:
-        flash("Failed to unfollow user.", "danger")
+    user_unfollow_user(session['id'], user_id)
     return redirect(url_for('home'))
 
 
@@ -311,23 +305,6 @@ def getMessagesBy(user_id):
 
     return response['messages']
 
-    # messages = []
-    # try:
-    #     with open("db/messages", "r") as file:
-    #         for line in file:
-    #             attr = line.strip('\n').split("\t")
-    #             if attr[0] == user_id:
-    #                 message = {}
-    #                 message['writeid'] = attr[0]
-    #                 message['writer'] = attr[1]
-    #                 message['content'] = attr[2]
-    #                 messages.append(message.copy())
-    #     messages.reverse()
-    # except:
-    #     return []
-
-    # return messages
-
 
 def getMessagesFeed(user_id):
     debug("getMessagesFeed Fuction")
@@ -375,38 +352,61 @@ def getUsers(user_id):
 
 def user_follow_user(follower, followee):
     debug("user_follow_user Fuction")
-    if not os.path.exists("db/follows"):
-        file = open("db/follows", "w")
-    else:
-        file = open("db/follows", "r+")
-    for line in file:
-        attr = line.strip('\n').split("\t")
-        if attr[0] == str(follower) and attr[1] == str(followee):
-            file.close()
-            return True
-    file.write(str(follower) + "\t" + str(followee) + "\n")
-    file.close()
+    request = {
+        'type': 'userFollowUser',
+        'data': {
+            'follower': follower,
+            'followee': followee
+        }
+    }
 
-    return True
+    response = sendRequest(request)
+
+    return response['success']
+
+    # if not os.path.exists("db/follows"):
+    #     file = open("db/follows", "w")
+    # else:
+    #     file = open("db/follows", "r+")
+    # for line in file:
+    #     attr = line.strip('\n').split("\t")
+    #     if attr[0] == str(follower) and attr[1] == str(followee):
+    #         file.close()
+    #         return True
+    # file.write(str(follower) + "\t" + str(followee) + "\n")
+    # file.close()
+
+    # return True
 
 
 def user_unfollow_user(follower, followee):
     debug("user_unfollow_user Fuction")
-    if not os.path.exists("db/follows"):
-        return False
+    request = {
+        'type': 'userUnfollowUser',
+        'data': {
+            'follower': follower,
+            'followee': followee
+        }
+    }
 
-    file = open("db/follows", "r")
-    lines = file.readlines()
-    file.close()
+    response = sendRequest(request)
 
-    file = open("db/follows", "w")
-    for line in lines:
-        attr = line.strip('\n').split("\t")
-        if not (attr[0] == str(follower) and attr[1] == str(followee)):
-            file.write(line)
-    file.close()
+    return response['success']
+    # if not os.path.exists("db/follows"):
+    #     return False
 
-    return True
+    # file = open("db/follows", "r")
+    # lines = file.readlines()
+    # file.close()
+
+    # file = open("db/follows", "w")
+    # for line in lines:
+    #     attr = line.strip('\n').split("\t")
+    #     if not (attr[0] == str(follower) and attr[1] == str(followee)):
+    #         file.write(line)
+    # file.close()
+
+    # return True
 
 
 def getFollowees(user_id):

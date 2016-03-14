@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <algorithm>
 #include "json.hpp"
 
 #include <string.h>
@@ -19,6 +20,7 @@ using json = nlohmann::json;
 #define DEFAULT_PORT 13000
 #define USER_FILE "db/users"
 #define MSG_FILE "db/messages"
+#define FLW_FILE "db/follows"
 
 // User data size: 256 bytes
 // Max Users: 9999 (2.56MB)
@@ -55,7 +57,6 @@ void abort(int errcode);
 void safe_open(fstream &fs, string path, ios_base::openmode mode);
 string format_string(string &str, uint width);
 string format_int(uint i, uint width);
-string format_time(time_t t);
 
 int main(int argc, char const *argv[]) {
 	//create socket
@@ -150,13 +151,20 @@ json processRequest(json request) {
 		}
 
 		else if(request["type"] == "postMessage"){
-			cout << "POST MESSAGE" << endl;
 			int user_id = request["data"]["user_id"];
 			response = postMessage(user_id, request["data"]["username"], request["data"]["message"]);
 		}
 		else if(request["type"] == "getMessagesBy"){
-			cout << "GET MESSAGES BY" << endl;
 			response = getMessagesBy(request["data"]["user_id"]);
+		}
+
+
+		
+		else if(request["type"] == "userFollowUser"){
+			response = userFollowUser(request["data"]["follower"], request["data"]["followee"]);
+		}
+		else if(request["type"] == "userUnfollowUser"){
+			response = userUnfollowUser(request["data"]["follower"], request["data"]["followee"]);
 		}
 
 	}
@@ -277,17 +285,11 @@ json postMessage(int user_id, string username, string message) {
 	}
 
 	time_t current_time = time(NULL);
-	
-	{
-		cout << "current time: " << current_time <<endl;
-		cout << "posterID: " << user_id << endl;
-		cout << "poster: " << username << endl;
-		cout << "message: " << message << endl;
-	}
 
 	fstream fs;
 	safe_open(fs, MSG_FILE, fstream::out | fstream::app);
 
+	// Will have to format time by 11/20/2286
 	fs  << current_time << "\t" 
 		<< format_int(user_id, ID_LEN) << "\t" 
 		<< format_string(username, NAME_CHAR_LIMIT) << "\t"
@@ -312,17 +314,99 @@ json getMessagesBy(int user_id){
 	while(fs >> timestamp >> l_id >> l_first_name >> l_last_name >> l_message){
 		if(user_id == l_id){
 			json message;
-			message["time"] = (timestamp);
-			message["user_id"] = (l_id);
-			message["first_name"] = (l_first_name);
-			message["last_name"] = (l_last_name);
-			message["message"] = (l_message);
+			message["time"] = timestamp;
+			message["user_id"] = l_id;
+			message["first_name"] = l_first_name;
+			message["last_name"] = l_last_name;
+			message["message"] = l_message;
 			messages.push_back(message);
 		}
 	}
+
+	reverse(messages.begin(), messages.end());
 	response["messages"] = messages;
 
 	fs.close();
+	return response;
+}
+
+json userFollowUser(int follower, int followee){
+	json response;
+	const uint line_len = ID_LEN + ID_LEN + 2;
+
+	string line, empty_line;
+	empty_line.resize(line_len - 1, '*');
+
+	int e_pos = -1;
+	int l_follower, l_followee;
+
+	fstream fs;
+	safe_open(fs, FLW_FILE, fstream::in | fstream::out);
+
+	while(getline(fs, line)){
+		if(line == empty_line){
+			if(e_pos == -1){
+				e_pos = fs.tellg();
+				e_pos -= line_len;
+			}
+			continue;
+		}
+
+		stringstream ss(line);
+		ss >> l_follower >> l_followee;
+		if(follower == l_follower && followee == l_followee){
+			wFlash(response, "You're alreadying following that user.");
+			return response;
+		}
+	}
+	fs.clear();
+
+	if(e_pos == -1)
+		fs.seekp(0, fstream::end);
+	else{
+		fs.seekp(e_pos);
+	}
+
+
+	cout << fs.tellp() << endl;
+	fs  << format_int(follower, ID_LEN) << "\t" 
+		<< format_int(followee, ID_LEN) << endl;
+	fs.close();
+
+	sFlash(response, "Follow user successful!");
+	return response;
+}
+
+json userUnfollowUser(int follower, int followee){
+	json response;
+	const uint line_len = ID_LEN + ID_LEN + 2;
+
+	string line, empty_line;
+	empty_line.resize(line_len - 1, '*');
+
+	uint e_pos = -1;
+	int l_follower, l_followee;
+
+	fstream fs;
+	safe_open(fs, FLW_FILE, fstream::in | fstream::out);
+
+	while(getline(fs, line)){
+		stringstream ss(line);
+		ss >> l_follower >> l_followee;
+		if(follower == l_follower && followee == l_followee){
+			e_pos = fs.tellg();
+			e_pos -= line_len; // Go back to beginning of line.
+			fs.clear();
+			fs.seekp(e_pos);
+			fs << empty_line;
+			fs.close();
+			sFlash(response, "Unfollow user successful!");
+			return response;
+		}
+	}
+	fs.close();
+
+	wFlash(response, "You're not following that user.");
 	return response;
 }
 
@@ -356,6 +440,11 @@ void abort(int errcode){
 }
 
 void safe_open(fstream &fs, string path, ios_base::openmode mode) {
+	if (fs.is_open()) {
+		cerr << "Warning: Attempted to reopen file: \"" + path + "\"";
+		return;
+	}
+
 	fs.open(path, mode);
 
 	if (!fs.is_open()) {
@@ -382,11 +471,3 @@ string format_int(uint i, uint width){
 
 	return ss.str();
 }
-
-// string format_time(time_t t){
-// 	// Format: DD/MM/YY HH:MM:SS
-// 	tm *utc = gmtime(&t);
-// 	string str;
-
-// 	return str;
-// }
