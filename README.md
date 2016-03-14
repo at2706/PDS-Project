@@ -33,3 +33,8 @@ Part 2
 Written by:
   - Minhtri Tran
   - Andy Tang
+
+
+
+
+TODO: Fix exceptions. redundent catch.

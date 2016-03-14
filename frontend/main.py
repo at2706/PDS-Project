@@ -111,7 +111,7 @@ def profile(user_id):
             abort(401)
 
         if delete_user(user_id, password):
-            return redirect(url_for('logout'))
+            return logout()
 
     return render_template(
         'user.html',
@@ -351,25 +351,19 @@ def getMessagesFeed(user_id):
 
 def getUsers(user_id):
     debug("getUsers Fuction")
-    users = []
-    try:
-        followees = getFollowees(user_id)
-        with open("db/user_index", "r") as file:
-            for line in file:
-                attr = line.strip('\n').split("\t")
-                if not attr[0] == user_id:
-                    user = {}
-                    user['id'] = attr[0]
-                    user['email'] = attr[1]
-                    if any(followee['id'] == attr[0] for followee in followees):
-                        user['already_followed'] = True
-                    else:
-                        user['already_followed'] = False
-                    users.append(user.copy())
-    except:
+    request = {
+        'type': 'getUsers',
+        'data': {
+            'user_id': user_id
+        }
+    }
+
+    response = sendRequest(request)
+
+    if response['users'] is None:
         return []
 
-    return users
+    return response['users']
 
 
 def user_follow_user(follower, followee):
@@ -386,20 +380,6 @@ def user_follow_user(follower, followee):
 
     return response['success']
 
-    # if not os.path.exists("db/follows"):
-    #     file = open("db/follows", "w")
-    # else:
-    #     file = open("db/follows", "r+")
-    # for line in file:
-    #     attr = line.strip('\n').split("\t")
-    #     if attr[0] == str(follower) and attr[1] == str(followee):
-    #         file.close()
-    #         return True
-    # file.write(str(follower) + "\t" + str(followee) + "\n")
-    # file.close()
-
-    # return True
-
 
 def user_unfollow_user(follower, followee):
     debug("user_unfollow_user Fuction")
@@ -414,57 +394,69 @@ def user_unfollow_user(follower, followee):
     response = sendRequest(request)
 
     return response['success']
-    # if not os.path.exists("db/follows"):
-    #     return False
-
-    # file = open("db/follows", "r")
-    # lines = file.readlines()
-    # file.close()
-
-    # file = open("db/follows", "w")
-    # for line in lines:
-    #     attr = line.strip('\n').split("\t")
-    #     if not (attr[0] == str(follower) and attr[1] == str(followee)):
-    #         file.write(line)
-    # file.close()
-
-    # return True
 
 
 def getFollowees(user_id):
     debug("getFollowees Fuction")
-    followees = []
-    try:
-        with open("db/follows", "r") as file:
-            for line in file:
-                attr = line.strip('\n').split("\t")
-                if attr[0] == user_id:
-                    followee = {}
-                    followee['id'] = attr[1]
-                    followee['name'] = User(attr[1]).data['name']
-                    followees.append(followee.copy())
-    except:
+    request = {
+        'type': 'getFollowees',
+        'data': {
+            'user_id': user_id
+        }
+    }
+
+    response = sendRequest(request)
+
+    if response['followees'] is None:
         return []
 
-    return followees
+    return response['followees']
+    # followees = []
+    # try:
+    #     with open("db/follows", "r") as file:
+    #         for line in file:
+    #             attr = line.strip('\n').split("\t")
+    #             if attr[0] == user_id:
+    #                 followee = {}
+    #                 followee['id'] = attr[1]
+    #                 followee['name'] = User(attr[1]).data['name']
+    #                 followees.append(followee.copy())
+    # except:
+    #     return []
+
+    # return followees
 
 
 def getFollowers(user_id):
     debug("getFollowers Fuction")
-    followers = []
-    try:
-        with open("db/follows", "r") as file:
-            for line in file:
-                attr = line.strip('\n').split("\t")
-                if attr[1] == user_id:
-                    follower = {}
-                    follower['id'] = attr[0]
-                    follower['name'] = User(attr[0]).data['name']
-                    followers.append(follower.copy())
-    except:
+    request = {
+        'type': 'getFollowers',
+        'data': {
+            'user_id': user_id
+        }
+    }
+
+    response = sendRequest(request)
+
+    if response['followers'] is None:
         return []
 
-    return followers
+    return response['followers']
+
+    # followers = []
+    # try:
+    #     with open("db/follows", "r") as file:
+    #         for line in file:
+    #             attr = line.strip('\n').split("\t")
+    #             if attr[1] == user_id:
+    #                 follower = {}
+    #                 follower['id'] = attr[0]
+    #                 follower['name'] = User(attr[0]).data['name']
+    #                 followers.append(follower.copy())
+    # except:
+    #     return []
+
+    # return followers
 
 
 def debug(message):

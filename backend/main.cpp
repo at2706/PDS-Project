@@ -134,6 +134,7 @@ int setUpServer(int server_port) {
 //route request based on 'type' field
 json processRequest(json request) {
 	json response;
+	response["success"] = true;
 
 	try{
 
@@ -164,12 +165,21 @@ json processRequest(json request) {
 		}
 
 
-		
+		else if(request["type"] == "getUsers"){
+			int user_id = request["data"]["user_id"];
+			response = getUsers(user_id);
+		}
 		else if(request["type"] == "userFollowUser"){
 			response = userFollowUser(request["data"]["follower"], request["data"]["followee"]);
 		}
 		else if(request["type"] == "userUnfollowUser"){
 			response = userUnfollowUser(request["data"]["follower"], request["data"]["followee"]);
+		}
+		else if(request["type"] == "getFollowees"){
+			response = getFollowees(request["data"]["user_id"]);
+		}
+		else if(request["type"] == "getFollowers"){
+			response = getFollowers(request["data"]["user_id"]);
 		}
 
 		else{
@@ -184,12 +194,14 @@ json processRequest(json request) {
 	}
 	catch(char const* e){
 		response.clear();
+		response["success"] = false;
 		string err_msg = "An exception has been thrown: ";
 		err_msg += e;
 		dFlash(response, err_msg);
 	}
 	catch(exception &e){
 		response.clear();
+		response["success"] = false;
 		string err_msg = "An exception has been thrown: ";
 		err_msg += e.what();
 		cout << err_msg << endl;
@@ -391,11 +403,36 @@ json getMessagesBy(int user_id){
 			messages.push_back(message);
 		}
 	}
+	fs.close();
 
 	reverse(messages.begin(), messages.end());
 	response["messages"] = messages;
 
+	return response;
+}
+
+json getUsers(int user_id){
+	json response;
+	json users;
+
+	fstream fs;
+	safe_open(fs, USER_FILE, fstream::in);
+
+	int l_id;
+	string l_email, l_hashed_password, l_first_name, l_last_name;
+
+	while(fs >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
+		if(user_id != l_id){
+			json user;
+			user["user_id"] = l_id;
+			user["email"] = l_email;
+			users.push_back(user);
+		}
+	}
 	fs.close();
+
+	response["users"] = users;
+
 	return response;
 }
 
@@ -473,6 +510,72 @@ json userUnfollowUser(int follower, int followee){
 	fs.close();
 
 	wFlash(response, "You're not following that user.");
+	return response;
+}
+
+json getFollowees(int user_id){
+	json response;
+	json followees;
+
+	string line;
+	int l_follower, l_followee;
+
+	fstream fs;
+	safe_open(fs, FLW_FILE, fstream::in);
+	while(getline(fs, line)){
+		stringstream ss(line);
+		ss >> l_follower >> l_followee;
+		if(user_id == l_follower){
+			json followee;
+			try{
+				json user = getUser(l_followee);
+				followee["user_id"] = l_followee;
+				followee["first_name"] = user["first_name"];
+				followee["last_name"] = user["last_name"];
+				followees.push_back(followee);
+			}
+			catch(...){
+				// If user does not exist
+				continue;
+			}
+		}
+	}
+	fs.close();
+
+	response["followees"] = followees;
+	return response;
+}
+
+json getFollowers(int user_id){
+	json response;
+	json followers;
+
+	string line;
+	int l_follower, l_followee;
+
+	fstream fs;
+	safe_open(fs, FLW_FILE, fstream::in);
+	while(getline(fs, line)){
+		stringstream ss(line);
+		ss >> l_follower >> l_followee;
+		if(user_id == l_followee){
+			json follower;
+			try{
+				json user = getUser(l_follower);
+				follower["user_id"] = l_follower;
+				follower["first_name"] = user["first_name"];
+				follower["last_name"] = user["last_name"];
+				followers.push_back(follower);
+			}
+			catch(...){
+				// If user does not exist
+				continue;
+			}
+		}
+	}
+	fs.close();
+
+	response["followers"] = followers;
 	return response;
 }
 

@@ -20,7 +20,7 @@
 		    	<ul class="list-unstyled">
 		    		{% for followee in followees %}
 						<li>
-							<a href="{{ url_for('profile', user_id=followee.id) }}">{{ followee.name }}</a>
+							<a href="{{ url_for('profile', user_id=followee.user_id) }}">{{ followee.first_name }} {{ followee.last_name }}</a>
 						</li>
 					{% endfor %}
 		    	</ul>
@@ -31,7 +31,7 @@
 		 	<div class="panel-body">
 		    	<ul class="list-unstyled">
 		    		{% for follower in followers %}
-						<li><a href="{{ url_for('profile', user_id=follower.id) }}">{{ follower.name }}</a></li>
+						<li><a href="{{ url_for('profile', user_id=follower.user_id) }}">{{ follower.first_name }} {{ follower.last_name }}</a></li>
 					{% endfor %}
 		    	</ul>
 			</div>

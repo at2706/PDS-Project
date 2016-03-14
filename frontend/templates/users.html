@@ -10,11 +10,11 @@
 		<ul class="list-group">
 			{% for user in users %}
 				<li class="list-group-item" style="padding-bottom:20px">
-					<a href="{{ url_for('profile', user_id=user.id) }}">{{user.email}}</a>
+					<a href="{{ url_for('profile', user_id=user.user_id) }}">{{user.email}}</a>
 					{% if not user.already_followed %}
-						<a class="btn btn-primary btn-sm pull-right" href="{{ url_for('follow', user_id=user.id) }}">Follow</a>
+						<a class="btn btn-primary btn-sm pull-right" href="{{ url_for('follow', user_id=user.user_id) }}">Follow</a>
 					{% else %}
-						<a class="btn btn-danger btn-sm pull-right" href="{{ url_for('unfollow', user_id=user.id) }}">Unfollow</a>
+						<a class="btn btn-danger btn-sm pull-right" href="{{ url_for('unfollow', user_id=user.user_id) }}">Unfollow</a>
 					{% endif %}
 				</li>
 			{% endfor %}
