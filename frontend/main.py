@@ -98,13 +98,6 @@ def profile(user_id):
     if 'id' not in session:
         return redirect(url_for('login'))
 
-    following = False
-    # followees = getFollowees(session['id'])
-    # for followee in followees:
-    #     if int(followee['id']) == user_id:
-    #         following = True
-    #         break
-
     if request.method == 'POST':
         password = request.form['password']
         if session['id'] != user_id:
@@ -115,8 +108,7 @@ def profile(user_id):
 
     return render_template(
         'user.html',
-        user=get_user(user_id),
-        following=following,
+        user=get_profile(user_id),
         current_user=(int(session['id']) == user_id)
     )
 
@@ -131,14 +123,10 @@ def edit(user_id):
         email = request.form['email']
         first_name = request.form['first_name']
         last_name = request.form['last_name']
-        user = User(user_id)
-        if not (email or first_name or last_name):
-            flash("There are empty fields.", "warning")
-        user.data['email'] = email
-        user.data['name'] = first_name + " " + last_name
-        user.commit()
-        session['username'] = first_name + " " + last_name
-
+        password = request.form['password']
+        pwd1 = request.form['password1']
+        pwd2 = request.form['password2']
+        edit_user(email, first_name, last_name, password, pwd1, pwd2)
         return redirect(url_for('profile', user_id=user_id))
 
     return render_template(
@@ -192,10 +180,12 @@ def error(e):
 # Returns reponse in json
 def sendRequest(request):
     debug("sendRequest Fuction")
+
     debug("Request Sent:")
     for key in request:
         debug("\t" + str(key) + " : " + str(request[key]))
     sock = socket.socket()
+
     try:
         sock.connect((BACKEND_IP, BACKEND_PORT))
         sock.send(json.dumps(request))
@@ -207,10 +197,12 @@ def sendRequest(request):
             data += data_segment
 
         response = json.loads(data)
+
         debug("\nRequest Response:")
         for key in response:
             debug("\t" + str(key) + " : " + str(response[key]))
         debug("\n")
+
         if all(key in response for key in ("fMessage", "fType")):
             for msg, type in zip(response["fMessage"], response["fType"]):
                 flash(msg, type)
@@ -278,19 +270,32 @@ def login_user(email, password):
     return response['success']
 
 
-def get_user(user_id):
-    debug("get_user Fuction")
+# No longer needed
+# def get_user(user_id):
+#     debug("get_user Fuction")
+#     request = {
+#         'type': 'getUser',
+#         'data': {
+#             'user_id': user_id
+#         }
+#     }
+
+#     response = sendRequest(request)
+
+#     return response
+
+
+def get_profile(user_id):
+    debug("get_profile Fuction")
     request = {
-        'type': 'getUser',
+        'type': 'getProfile',
         'data': {
-            'user_id': user_id
+            'user_id': session['id'],
+            'profile': user_id
         }
     }
 
     response = sendRequest(request)
-
-    if response['success']:
-        response['id'] = response['user_id']
 
     return response
 
@@ -330,23 +335,36 @@ def getMessagesBy(user_id):
 
 def getMessagesFeed(user_id):
     debug("getMessagesFeed Fuction")
-    messages = []
-    try:
-        followees = getFollowees(user_id)
-        with open("db/messages", "r") as file:
-            for line in file:
-                attr = line.strip('\n').split("\t")
-                if any(followee['id'] == attr[0] for followee in followees):
-                    message = {}
-                    message['user_id'] = attr[0]
-                    message['username'] = attr[1]
-                    message['message'] = attr[2]
-                    messages.append(message.copy())
-        messages.reverse()
-    except:
+    request = {
+        'type': 'getMessagesFeed',
+        'data': {
+            'user_id': user_id,
+        }
+    }
+
+    response = sendRequest(request)
+
+    if response['messages'] is None:
         return []
 
-    return messages
+    return response['messages']
+    # messages = []
+    # try:
+    #     followees = getFollowees(user_id)
+    #     with open("db/messages", "r") as file:
+    #         for line in file:
+    #             attr = line.strip('\n').split("\t")
+    #             if any(followee['id'] == attr[0] for followee in followees):
+    #                 message = {}
+    #                 message['user_id'] = attr[0]
+    #                 message['username'] = attr[1]
+    #                 message['message'] = attr[2]
+    #                 messages.append(message.copy())
+    #     messages.reverse()
+    # except:
+    #     return []
+
+    # return messages
 
 
 def getUsers(user_id):
@@ -411,20 +429,6 @@ def getFollowees(user_id):
         return []
 
     return response['followees']
-    # followees = []
-    # try:
-    #     with open("db/follows", "r") as file:
-    #         for line in file:
-    #             attr = line.strip('\n').split("\t")
-    #             if attr[0] == user_id:
-    #                 followee = {}
-    #                 followee['id'] = attr[1]
-    #                 followee['name'] = User(attr[1]).data['name']
-    #                 followees.append(followee.copy())
-    # except:
-    #     return []
-
-    # return followees
 
 
 def getFollowers(user_id):
@@ -442,21 +446,6 @@ def getFollowers(user_id):
         return []
 
     return response['followers']
-
-    # followers = []
-    # try:
-    #     with open("db/follows", "r") as file:
-    #         for line in file:
-    #             attr = line.strip('\n').split("\t")
-    #             if attr[1] == user_id:
-    #                 follower = {}
-    #                 follower['id'] = attr[0]
-    #                 follower['name'] = User(attr[0]).data['name']
-    #                 followers.append(follower.copy())
-    # except:
-    #     return []
-
-    # return followers
 
 
 def debug(message):

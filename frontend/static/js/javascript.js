@@ -4,7 +4,7 @@ $(document).ready(function(){
     	$('#charCounter').html(this.value.length);
     });
 
-    //Registration Form Validation
+    //Form Validation
     $('#password2').on('keyup focus', function() {
     	var p1 = $('#password1').get(0);
     	if(p1.value != this.value){

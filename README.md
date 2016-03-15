@@ -28,7 +28,7 @@ Part 2
 
   - Form validation: character limits.
     User Delete: now requires password.
-    TODO: timestamps in messages
+    Timestamps in messages
 
 Written by:
   - Minhtri Tran

@@ -37,8 +37,10 @@ json processRequest(json request);
 
 json createUser(string email, string first_name, string last_name, string hashed_password);
 json deleteUser(int user_id, string hashed_password);
+json editUser(int user_id, string hashed_password);
 json authUser(string email, string hashed_password);
 json getUser(int user_id);
+json getProfile(int user_id, int profile);
 json postMessage(int user_id, string username, string message);
 json getMessagesBy(int user_id);
 json getMessagesFeed(int user_id);
@@ -58,6 +60,7 @@ void abort(int errcode);
 void safe_open(fstream &fs, string path, ios_base::openmode mode);
 string format_string(string &str, uint width);
 string format_int(uint i, uint width);
+string format_timestamp(time_t now, uint t);
 
 int main(int argc, char const *argv[]) {
 	//create socket
@@ -142,20 +145,22 @@ json processRequest(json request) {
 			response = createUser(request["data"]["email"], request["data"]["first_name"],
 				request["data"]["last_name"], request["data"]["hashed_password"]);
 		}
-
 		else if(request["type"] == "deleteUser"){
 			response = deleteUser(request["data"]["user_id"], request["data"]["hashed_password"]);
 		}
-
+		else if(request["type"] == "editUser"){
+			response = editUser(request["data"]["user_id"], request["data"]["hashed_password"]);
+		}
 		else if(request["type"] == "authUser"){
 			response = authUser(request["data"]["email"], request["data"]["hashed_password"]);
 		}
-
-		else if(request["type"] == "getUser"){
-			int user_id = request["data"]["user_id"];
-			response = getUser(user_id);
+		// No longer needed.
+		// else if(request["type"] == "getUser"){
+		// 	response = getUser(request["data"]["user_id"]);
+		// }
+		else if(request["type"] == "getProfile"){
+			response = getProfile(request["data"]["user_id"], request["data"]["profile"]);
 		}
-
 		else if(request["type"] == "postMessage"){
 			int user_id = request["data"]["user_id"];
 			response = postMessage(user_id, request["data"]["username"], request["data"]["message"]);
@@ -163,8 +168,10 @@ json processRequest(json request) {
 		else if(request["type"] == "getMessagesBy"){
 			response = getMessagesBy(request["data"]["user_id"]);
 		}
-
-
+		else if(request["type"] == "getMessagesFeed"){
+			cout << "Processing" << endl;
+			response = getMessagesFeed(request["data"]["user_id"]);
+		}
 		else if(request["type"] == "getUsers"){
 			int user_id = request["data"]["user_id"];
 			response = getUsers(user_id);
@@ -302,6 +309,12 @@ json deleteUser(int user_id, string hashed_password){
 	return response;
 }
 
+json editUser(int user_id, string hashed_password){
+	json response;
+
+	return response;
+}
+
 //corresponds with login_user
 json authUser(string email, string hashed_password) {
 	json response;
@@ -329,6 +342,7 @@ json authUser(string email, string hashed_password) {
 	return response;
 }
 
+// Now used internally only.
 json getUser(int user_id){
 	json response;
 
@@ -354,6 +368,27 @@ json getUser(int user_id){
 	fs.close();
 	abort(401);
 	return response;
+}
+
+json getProfile(int user_id, int profile){
+	cout << "Start" << endl;
+	bool following = false;
+	json followees = getFollowees(user_id)["followees"];
+	cout << "Start2" << endl;
+	for(json followee : followees){
+
+		cout << "Start3" << endl;
+		if(profile == followee["user_id"]){
+			cout << "middle" << endl;
+			following = true;
+			break;
+		}
+	}
+	cout << "after" << endl;
+	json user = getUser(profile);
+	user["following"] = following;
+	cout << "end" << endl;
+	return user;
 }
 
 json postMessage(int user_id, string username, string message) {
@@ -386,16 +421,18 @@ json getMessagesBy(int user_id){
 	json response;
 	json messages;
 
+	time_t current_time = time(NULL);
+	int timestamp, l_id;
+	string l_first_name, l_last_name, l_message;
+
 	fstream fs;
 	safe_open(fs, MSG_FILE, fstream::in);
 
-	int timestamp, l_id;
-	string l_first_name, l_last_name, l_message;
 
 	while(fs >> timestamp >> l_id >> l_first_name >> l_last_name >> l_message){
 		if(user_id == l_id){
 			json message;
-			message["time"] = timestamp;
+			message["time"] = format_timestamp(current_time, timestamp);
 			message["user_id"] = l_id;
 			message["first_name"] = l_first_name;
 			message["last_name"] = l_last_name;
@@ -411,9 +448,43 @@ json getMessagesBy(int user_id){
 	return response;
 }
 
+json getMessagesFeed(int user_id){
+	json response;
+	json messages;
+	json followees = getFollowees(user_id)["followees"];
+
+	time_t current_time = time(NULL);
+	int timestamp, l_id;
+	string l_first_name, l_last_name, l_message;
+
+	fstream fs;
+	safe_open(fs, MSG_FILE, fstream::in);
+
+	while(fs >> timestamp >> l_id >> l_first_name >> l_last_name >> l_message){
+		for(json followee : followees){
+			if(l_id == followee["user_id"]){
+				json message;
+				message["time"] = format_timestamp(current_time, timestamp);
+				message["user_id"] = l_id;
+				message["first_name"] = l_first_name;
+				message["last_name"] = l_last_name;
+				message["message"] = l_message;
+				messages.push_back(message);
+			}
+		}
+	}
+	fs.close();
+
+	reverse(messages.begin(), messages.end());
+	response["messages"] = messages;
+
+	return response;
+}
+
 json getUsers(int user_id){
 	json response;
 	json users;
+	json followees = getFollowees(user_id)["followees"];
 
 	fstream fs;
 	safe_open(fs, USER_FILE, fstream::in);
@@ -423,9 +494,18 @@ json getUsers(int user_id){
 
 	while(fs >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
 		if(user_id != l_id){
+			bool following = false;
+			for(json followee : followees){
+				if(l_id == followee["user_id"]){
+					following = true;
+					break;
+				}
+			}
+
 			json user;
 			user["user_id"] = l_id;
 			user["email"] = l_email;
+			user["following"] = following;
 			users.push_back(user);
 		}
 	}
@@ -639,4 +719,32 @@ string format_int(uint i, uint width){
 	ss << right << i;
 
 	return ss.str();
+}
+
+string format_timestamp(time_t now, uint t){
+	double diff = difftime(now, (time_t)t);
+	cout << diff << endl;
+
+	string str;
+
+	if(diff < 10)
+		str = "Just now";
+	else if(diff < 60)
+		str = to_string(diff) + " seconds ago.";
+	else if (diff< 3600){
+		int min = diff / 60;
+		str = to_string(min);
+		str += (min == 1) ? " minute ago." : " minutes ago.";
+	}
+	else if (diff< 86400){
+		int hour = diff / 3600;
+		str = to_string(hour);
+		str += (hour == 1) ? " hour ago." : " hours ago.";
+	}
+	else{
+		int day = diff / 86400;
+		str = to_string(day);
+		str += (day == 1) ? " day ago." : " days ago.";
+	}
+	return str;
 }

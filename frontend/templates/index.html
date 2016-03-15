@@ -49,7 +49,10 @@
 		</form>
 		<ul class="list-group">
 			{% for message in messages %}
-				<li class="list-group-item">{{ message.message }}</li>
+				<li class="list-group-item">
+					{{ message.message }} <br/>
+					<small>{{ message.time }}</small>
+				</li>
 			{% endfor %}
 		</ul>
 	</div>
@@ -58,7 +61,12 @@
 		<hr/>
 		<ul class="list-group">
 			{% for message in feed %}
-				<li class="list-group-item"><a href="{{ url_for('profile', user_id=message.user_id) }}">{{ message.username }}</a>: {{ message.message }}</li>
+				<li class="list-group-item">
+					<a href="{{ url_for('profile', user_id=message.user_id) }}">
+						{{ message.first_name }} {{ message.last_name }}
+					</a>: {{ message.message }} <br/>
+					<small>{{ message.time }}</small>
+				</li>
 			{% endfor %}
 		</ul>
 	</div>
