@@ -246,7 +246,6 @@ json createUser(string email, string first_name, string last_name, string hashed
 
 		stringstream ss(line);
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
-		if(id < l_id) id = l_id;
 		if(email.compare(l_email) == 0){
 			fs.close();
 			dFlash(response, "That email is already taken.");
@@ -254,23 +253,33 @@ json createUser(string email, string first_name, string last_name, string hashed
 		}
 
 	}
+	fs.clear();
+	fs.seekg(-ID_LEN, fstream::end);
+	fs >> id;
 
 	fs.clear();
 
 	if(e_pos == -1)
-		fs.seekp(0, fstream::end);
+		fs.seekp(-ID_LEN, fstream::end);
 	else{
 		fs.seekp(e_pos);
 	}
 
 	string name = first_name + " " + last_name;
-	fs  << format_int(id + 1, ID_LEN) << "\t" 
+	fs  << format_int(id, ID_LEN) << "\t" 
 		<< format_string(email, EMAIL_CHAR_LIMIT) << "\t" 
 		<< hashed_password << "\t"
 		<< format_string(name, NAME_CHAR_LIMIT)
 		<< endl;
-	fs.close();
 
+	if(e_pos != -1){
+		fs.clear();
+		fs.seekp(-ID_LEN, fstream::end);
+	}
+	cout << "Seek  " << fs.tellp() << "   " << id << endl;
+	fs << format_int(id + 1, ID_LEN);
+
+	fs.close();
 	iFlash(response, "Successfully created user.");
 	return response;
 }
@@ -300,6 +309,7 @@ json deleteUser(int user_id, string hashed_password){
 				fs << empty_line;
 				fs.close();
 				sFlash(response, "Successfully deleted User.");
+				return response;
 			}
 			else{
 				fs.close();
@@ -309,34 +319,7 @@ json deleteUser(int user_id, string hashed_password){
 		}
 	}
 	fs.close();
-
-	line_len = ID_LEN + ID_LEN + 1;
-
-	empty_line.resize(line_len, '*');
-
-	int l_follower, l_followee;
-
-	safe_open(fs, FLW_FILE, fstream::in | fstream::out);
-
-	while(getline(fs, line)){
-		if(line == empty_line){
-			continue;
-		}
-
-		stringstream ss(line);
-		ss >> l_follower >> l_followee;
-		if(user_id == l_follower){
-			e_pos = fs.tellg();
-			e_pos -= line_len + 1;
-			fs.clear();
-			fs.seekp(e_pos);
-			fs << empty_line;
-			fs.clear();
-		}
-	}
-
-	fs.close();
-
+	dFlash(response, "Delete Failed");
 	return response;
 }
 

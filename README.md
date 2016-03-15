@@ -33,10 +33,3 @@ Part 2
 Written by:
   - Minhtri Tran
   - Andy Tang
-
-
-
-
-TODO: Fix exceptions. redundent catch.
-TODO: Make file modifications atomic.
-TODO: Test on Firefox. Only applies to jquery stuff.

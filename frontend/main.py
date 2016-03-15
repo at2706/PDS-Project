@@ -44,8 +44,7 @@ def register():
         first_name = request.form['first_name']
         last_name = request.form['last_name']
         pwd1 = request.form['password1']
-        pwd2 = request.form['password2']
-        if create_user(email, first_name, last_name, pwd1, pwd2):
+        if create_user(email, first_name, last_name, pwd1):
             return redirect(url_for('home'))
 
     return render_template(
@@ -217,7 +216,7 @@ def sendRequest(request):
     return response
 
 
-def create_user(email, first_name, last_name, pwd1, pwd2):
+def create_user(email, first_name, last_name, pwd1):
     debug("create_user Fuction")
     request = {
         'type': 'createUser',
@@ -455,5 +454,6 @@ def getFollowers(user_id):
 def debug(message):
     if DEBUGGING:
         print message
+
 
 app.run("127.0.0.1", 5000, debug=DEBUGGING)
