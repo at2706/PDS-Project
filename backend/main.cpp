@@ -223,10 +223,10 @@ json processRequest(json request) {
 
 json createUser(string email, string first_name, string last_name, string hashed_password) {
 	json response;
-	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 4;
+	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 3;
 
 	string line, empty_line;
-	empty_line.resize(line_len - 1, '*');
+	empty_line.resize(line_len, '*');
 
 
 	int e_pos = -1, id = 0, l_id;
@@ -239,7 +239,7 @@ json createUser(string email, string first_name, string last_name, string hashed
 		if(line == empty_line){
 			if(e_pos == -1){
 				e_pos = fs.tellg();
-				e_pos -= line_len;
+				e_pos -= line_len + 1;
 			}
 			continue;
 		}
@@ -277,10 +277,10 @@ json createUser(string email, string first_name, string last_name, string hashed
 
 json deleteUser(int user_id, string hashed_password){
 	json response;
-	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 4;
+	uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 3;
 
 	string line, empty_line;
-	empty_line.resize(line_len - 1, '*');
+	empty_line.resize(line_len, '*');
 
 	int e_pos = -1, l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
@@ -294,15 +294,15 @@ json deleteUser(int user_id, string hashed_password){
 		if(user_id == l_id){
 			if(hashed_password.compare(l_hashed_password) == 0){
 				e_pos = fs.tellg();
-				e_pos -= line_len;
+				e_pos -= line_len + 1;
 				fs.clear();
 				fs.seekp(e_pos);
 				fs << empty_line;
 				fs.close();
 				sFlash(response, "Successfully deleted User.");
-				return response;
 			}
 			else{
+				fs.close();
 				wFlash(response, "Incorrect password.");
 				return response;
 			}
@@ -310,16 +310,42 @@ json deleteUser(int user_id, string hashed_password){
 	}
 	fs.close();
 
-	dFlash(response, "User does not exist.");
+	line_len = ID_LEN + ID_LEN + 1;
+
+	empty_line.resize(line_len, '*');
+
+	int l_follower, l_followee;
+
+	safe_open(fs, FLW_FILE, fstream::in | fstream::out);
+
+	while(getline(fs, line)){
+		if(line == empty_line){
+			continue;
+		}
+
+		stringstream ss(line);
+		ss >> l_follower >> l_followee;
+		if(user_id == l_follower){
+			e_pos = fs.tellg();
+			e_pos -= line_len + 1;
+			fs.clear();
+			fs.seekp(e_pos);
+			fs << empty_line;
+			fs.clear();
+		}
+	}
+
+	fs.close();
+
 	return response;
 }
 
 json editUser(int user_id, string email, string first_name, string last_name, string hashed_password, string new_password){
 	json response;
-	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 4;
+	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 3;
 
 	string line, empty_line;
-	empty_line.resize(line_len - 1, '*');
+	empty_line.resize(line_len, '*');
 
 
 	int e_pos = -1, l_id;
@@ -343,50 +369,74 @@ json editUser(int user_id, string email, string first_name, string last_name, st
 			}
 
 			e_pos = fs.tellg();
-			e_pos -= line_len;
-			fs.clear();
+			e_pos -= line_len + 1;
 
-			if(!email.empty()){
-				cout << "New email" << endl;
-				fs.seekp(e_pos + ID_LEN);
-				fs << format_string(email, EMAIL_CHAR_LIMIT);
-			}
+			response["first_name"] = l_first_name;
+			response["last_name"] = l_last_name;
+			response["email"] = l_email;
 
-			if(!new_password.empty()){
-				cout << "New password" << endl;
-				fs.seekp(e_pos + ID_LEN + EMAIL_CHAR_LIMIT + 1);
-				fs << new_password;
-			}
-
-			if(!first_name.empty() || !last_name.empty()){
-				cout << "New name" << endl;
-				string full_name = (!first_name.empty()) ? first_name : l_first_name;
-				full_name += " ";
-				full_name += (!last_name.empty()) ? last_name : l_last_name;
-				fs.seekp(e_pos + ID_LEN + EMAIL_CHAR_LIMIT + 128 + 2);
-				fs << format_string(full_name, NAME_CHAR_LIMIT);
-			}
-
+		}
+		else if(email.compare(l_email) == 0){
 			fs.close();
-			sFlash(response, "Successfully updated user information.");
+			wFlash(response, "That email is taken.");
 			return response;
 		}
 	}
+	fs.clear();
+
+	// TODO: Make atomic
+	if(!email.empty()){
+		fs.seekp(e_pos + ID_LEN + 1);
+		fs << format_string(email, EMAIL_CHAR_LIMIT);
+		response["email"] = email;
+	}
+
+	if(!new_password.empty()){
+		fs.seekp(e_pos + ID_LEN + EMAIL_CHAR_LIMIT + 2);
+		fs << new_password;
+	}
+
+	if(!first_name.empty() || !last_name.empty()){
+		string current_first_name = response["first_name"];
+		string current_last_name = response["last_name"];
+
+		string new_first_name = (!first_name.empty()) ? first_name : current_first_name;
+		response["first_name"] = new_first_name;
+
+		string new_last_name = (!last_name.empty()) ? last_name : current_last_name;
+		response["last_name"] = new_last_name;
+
+		string new_full_name = new_first_name + " " + new_last_name;
+		fs.seekp(e_pos + ID_LEN + EMAIL_CHAR_LIMIT + 128 + 3);
+		fs << format_string(new_full_name, NAME_CHAR_LIMIT);
+	}
+
 	fs.close();
+	sFlash(response, "Successfully updated user information.");
 	return response;
 }
 
 //corresponds with login_user
 json authUser(string email, string hashed_password) {
 	json response;
+	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 3;
 
-	fstream fs;
-	safe_open(fs, USER_FILE, fstream::in);
+	string line, empty_line;
+	empty_line.resize(line_len, '*');
 
 	int l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
-	while(fs >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
+	fstream fs;
+	safe_open(fs, USER_FILE, fstream::in | fstream::out);
+
+	while(getline(fs, line)){
+		if(line == empty_line){
+			continue;
+		}
+
+		stringstream ss(line);
+		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		if(email.compare(l_email) == 0 && hashed_password.compare(l_hashed_password) == 0){
 			response["user_id"] = l_id;
 			response["email"] = l_email;
@@ -398,6 +448,7 @@ json authUser(string email, string hashed_password) {
 		}
 	}
 
+
 	wFlash(response, "Bad log in.");
 	fs.close();
 	return response;
@@ -408,14 +459,24 @@ json authUser(string email, string hashed_password) {
 // Error 400: Bad Request!
 json getUser(int user_id){
 	json user;
+	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 3;
 
-	fstream fs;
-	safe_open(fs, USER_FILE, fstream::in);
+	string line, empty_line;
+	empty_line.resize(line_len, '*');
 
 	int l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
-	while(fs >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
+	fstream fs;
+	safe_open(fs, USER_FILE, fstream::in);
+
+	while(getline(fs, line)){
+		if(line == empty_line){
+			continue;
+		}
+
+		stringstream ss(line);
+		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		if(user_id == l_id){
 			user["user_id"] = l_id;
 			user["email"] = l_email;
@@ -476,6 +537,10 @@ json postMessage(int user_id, string username, string message) {
 json getMessagesBy(int user_id){
 	json response;
 	json messages;
+	const uint line_len = ID_LEN + NAME_CHAR_LIMIT + MSG_LEN + 3;
+
+	string line, empty_line;
+	empty_line.resize(line_len, '*');
 
 	time_t current_time = time(NULL);
 	int timestamp, l_id;
@@ -484,8 +549,15 @@ json getMessagesBy(int user_id){
 	fstream fs;
 	safe_open(fs, MSG_FILE, fstream::in);
 
+	while(getline(fs, line)){
+		if(line == empty_line){
+			continue;
+		}
 
-	while(fs >> timestamp >> l_id >> l_first_name >> l_last_name >> l_message){
+		stringstream ss(line);
+		ss >> timestamp >> l_id >> l_first_name >> l_last_name;
+		getline(ss, l_message);
+
 		if(user_id == l_id){
 			json message;
 			message["time"] = format_timestamp(current_time, timestamp);
@@ -496,6 +568,7 @@ json getMessagesBy(int user_id){
 			messages.push_back(message);
 		}
 	}
+
 	fs.close();
 
 	reverse(messages.begin(), messages.end());
@@ -541,14 +614,25 @@ json getUsers(int user_id){
 	json response;
 	json users;
 	json followees = getFollowees(user_id)["followees"];
+	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 3;
 
-	fstream fs;
-	safe_open(fs, USER_FILE, fstream::in);
+	string line, empty_line;
+	empty_line.resize(line_len, '*');
 
 	int l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
-	while(fs >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
+	fstream fs;
+	safe_open(fs, USER_FILE, fstream::in);
+
+
+	while(getline(fs, line)){
+		if(line == empty_line){
+			continue;
+		}
+
+		stringstream ss(line);
+		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		if(user_id != l_id){
 			bool following = false;
 			for(json followee : followees){
@@ -579,13 +663,14 @@ json userFollowUser(int follower, int followee){
 	// entire file on every call. This is not ideal, but 
 	// it's the only way I can think of that verifies the 
 	// integrity of user data and prevent duplicate data.
-	// Need some feedback.
+	// It also allows me to fill in the blanks. Need some 
+	// feedback.
 	//////////////////////////////////
 	json response;
-	const uint line_len = ID_LEN + ID_LEN + 2;
+	const uint line_len = ID_LEN + ID_LEN + 1;
 
 	string line, empty_line;
-	empty_line.resize(line_len - 1, '*');
+	empty_line.resize(line_len, '*');
 
 	int e_pos = -1, l_follower, l_followee;
 
@@ -596,7 +681,7 @@ json userFollowUser(int follower, int followee){
 		if(line == empty_line){
 			if(e_pos == -1){
 				e_pos = fs.tellg();
-				e_pos -= line_len;
+				e_pos -= line_len + 1;
 			}
 			continue;
 		}
@@ -626,10 +711,10 @@ json userFollowUser(int follower, int followee){
 
 json userUnfollowUser(int follower, int followee){
 	json response;
-	const uint line_len = ID_LEN + ID_LEN + 2;
+	const uint line_len = ID_LEN + ID_LEN + 1;
 
 	string line, empty_line;
-	empty_line.resize(line_len - 1, '*');
+	empty_line.resize(line_len, '*');
 
 	uint e_pos = -1;
 	int l_follower, l_followee;
@@ -642,7 +727,7 @@ json userUnfollowUser(int follower, int followee){
 		ss >> l_follower >> l_followee;
 		if(follower == l_follower && followee == l_followee){
 			e_pos = fs.tellg();
-			e_pos -= line_len;
+			e_pos -= line_len + 1;
 			fs.clear();
 			fs.seekp(e_pos);
 			fs << empty_line;
@@ -813,7 +898,7 @@ string format_timestamp(time_t now, uint t){
 	if(diff < 10)
 		str = "Just now";
 	else if(diff < 60)
-		str = to_string(diff) + " seconds ago.";
+		str = to_string((int)diff) + " seconds ago.";
 	else if (diff< 3600){
 		int min = diff / 60;
 		str = to_string(min);

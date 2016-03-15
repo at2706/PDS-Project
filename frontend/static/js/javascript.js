@@ -14,10 +14,9 @@ $(document).ready(function(){
     		this.setCustomValidity("");
     });
 
-    $('email').on('keyup focus', function() {
+    $('#email').on('keyup focus', function() {
 
         //EMAIL_CHAR_LIMIT
-        alert(this.value);
         if(this.value.length > 60){
             this.setCustomValidity("Email is too long!");
         }

@@ -5,7 +5,6 @@ import json
 from flask import Flask, render_template, request, redirect, flash, url_for, abort, session
 from jinja2 import TemplateNotFound
 from werkzeug import secure_filename
-from user import User
 
 BACKEND_IP = "localhost"
 BACKEND_PORT = 13000
@@ -126,8 +125,8 @@ def edit(user_id):
         password = request.form['password']
         pwd1 = request.form['password1']
         pwd2 = request.form['password2']
-        edit_user(email, first_name, last_name, password, pwd1, pwd2)
-        return redirect(url_for('profile', user_id=user_id))
+        if edit_user(email, first_name, last_name, password, pwd1, pwd2):
+            return redirect(url_for('profile', user_id=user_id))
 
     return render_template(
         'user_edit.html',
@@ -245,11 +244,14 @@ def edit_user(email, first_name, last_name, password, pwd1, pwd2):
             'first_name': first_name,
             'last_name': last_name,
             'hashed_password': hashlib.sha512(password).hexdigest(),
-            'new_password': "" if (pwd1 == "") else hashlib.sha512(pwd1).hexdigest()
+            'new_password': "" if pwd1 == "" else hashlib.sha512(pwd1).hexdigest()
         }
     }
 
     response = sendRequest(request)
+
+    session['username'] = response['first_name'] + " " + response['last_name']
+    session['email'] = response['email']
 
     return response['success']
 
@@ -367,23 +369,6 @@ def getMessagesFeed(user_id):
         return []
 
     return response['messages']
-    # messages = []
-    # try:
-    #     followees = getFollowees(user_id)
-    #     with open("db/messages", "r") as file:
-    #         for line in file:
-    #             attr = line.strip('\n').split("\t")
-    #             if any(followee['id'] == attr[0] for followee in followees):
-    #                 message = {}
-    #                 message['user_id'] = attr[0]
-    #                 message['username'] = attr[1]
-    #                 message['message'] = attr[2]
-    #                 messages.append(message.copy())
-    #     messages.reverse()
-    # except:
-    #     return []
-
-    # return messages
 
 
 def getUsers(user_id):
