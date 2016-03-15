@@ -38,3 +38,6 @@ Written by:
 
 
 TODO: Fix exceptions. redundent catch.
+TODO: Fix form email length check in jquery. Not actually working... shhh.
+TODO: Make sure every read/write understands the new concept of blank lines.
+TODO: Test on Firefox. Only applies to jquery stuff.

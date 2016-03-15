@@ -37,7 +37,7 @@ json processRequest(json request);
 
 json createUser(string email, string first_name, string last_name, string hashed_password);
 json deleteUser(int user_id, string hashed_password);
-json editUser(int user_id, string hashed_password);
+json editUser(int user_id, string email, string first_name, string last_name, string hashed_password, string new_password);
 json authUser(string email, string hashed_password);
 json getUser(int user_id);
 json getProfile(int user_id, int profile);
@@ -149,7 +149,12 @@ json processRequest(json request) {
 			response = deleteUser(request["data"]["user_id"], request["data"]["hashed_password"]);
 		}
 		else if(request["type"] == "editUser"){
-			response = editUser(request["data"]["user_id"], request["data"]["hashed_password"]);
+			response = editUser(request["data"]["user_id"],
+								request["data"]["email"],
+								request["data"]["first_name"],
+								request["data"]["last_name"],
+								request["data"]["hashed_password"],
+								request["data"]["new_password"]);
 		}
 		else if(request["type"] == "authUser"){
 			response = authUser(request["data"]["email"], request["data"]["hashed_password"]);
@@ -169,7 +174,6 @@ json processRequest(json request) {
 			response = getMessagesBy(request["data"]["user_id"]);
 		}
 		else if(request["type"] == "getMessagesFeed"){
-			cout << "Processing" << endl;
 			response = getMessagesFeed(request["data"]["user_id"]);
 		}
 		else if(request["type"] == "getUsers"){
@@ -190,7 +194,7 @@ json processRequest(json request) {
 		}
 
 		else{
-			cout << "Request type could not be processed." << endl;
+			cout << "Request type could not be processed: " << request["type"] << endl;
 		}
 
 	}
@@ -244,6 +248,7 @@ json createUser(string email, string first_name, string last_name, string hashed
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		if(id < l_id) id = l_id;
 		if(email.compare(l_email) == 0){
+			fs.close();
 			dFlash(response, "That email is already taken.");
 			return response;
 		}
@@ -309,9 +314,65 @@ json deleteUser(int user_id, string hashed_password){
 	return response;
 }
 
-json editUser(int user_id, string hashed_password){
+json editUser(int user_id, string email, string first_name, string last_name, string hashed_password, string new_password){
 	json response;
+	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 4;
 
+	string line, empty_line;
+	empty_line.resize(line_len - 1, '*');
+
+
+	int e_pos = -1, l_id;
+	string l_email, l_hashed_password, l_first_name, l_last_name;
+
+	fstream fs;
+	safe_open(fs, USER_FILE, fstream::in | fstream::out);
+
+	while(getline(fs, line)){
+		if(line == empty_line){
+			continue;
+		}
+
+		stringstream ss(line);
+		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
+		if(user_id == l_id){
+			if(hashed_password.compare(l_hashed_password) != 0){
+				fs.close();
+				dFlash(response, "Invaid Password.");
+				return response;
+			}
+
+			e_pos = fs.tellg();
+			e_pos -= line_len;
+			fs.clear();
+
+			if(!email.empty()){
+				cout << "New email" << endl;
+				fs.seekp(e_pos + ID_LEN);
+				fs << format_string(email, EMAIL_CHAR_LIMIT);
+			}
+
+			if(!new_password.empty()){
+				cout << "New password" << endl;
+				fs.seekp(e_pos + ID_LEN + EMAIL_CHAR_LIMIT + 1);
+				fs << new_password;
+			}
+
+			if(!first_name.empty() || !last_name.empty()){
+				cout << "New name" << endl;
+				string full_name = (!first_name.empty()) ? first_name : l_first_name;
+				full_name += " ";
+				full_name += (!last_name.empty()) ? last_name : l_last_name;
+				fs.seekp(e_pos + ID_LEN + EMAIL_CHAR_LIMIT + 128 + 2);
+				fs << format_string(full_name, NAME_CHAR_LIMIT);
+			}
+
+			fs.close();
+			sFlash(response, "Successfully updated user information.");
+			return response;
+		}
+	}
+	fs.close();
 	return response;
 }
 
@@ -343,8 +404,10 @@ json authUser(string email, string hashed_password) {
 }
 
 // Now used internally only.
+// Throws exception if user does not exist.
+// Error 400: Bad Request!
 json getUser(int user_id){
-	json response;
+	json user;
 
 	fstream fs;
 	safe_open(fs, USER_FILE, fstream::in);
@@ -354,40 +417,33 @@ json getUser(int user_id){
 
 	while(fs >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name){
 		if(user_id == l_id){
-			response["user_id"] = l_id;
-			response["email"] = l_email;
-			response["first_name"] = l_first_name;
-			response["last_name"] = l_last_name;
+			user["user_id"] = l_id;
+			user["email"] = l_email;
+			user["first_name"] = l_first_name;
+			user["last_name"] = l_last_name;
 
 			fs.close();
-			response["success"] = true;
-			return response;
+			user["success"] = true;
+			return user;
 		}
 	}
 
 	fs.close();
-	abort(401);
-	return response;
+	abort(400);
+	return user;
 }
 
 json getProfile(int user_id, int profile){
-	cout << "Start" << endl;
 	bool following = false;
 	json followees = getFollowees(user_id)["followees"];
-	cout << "Start2" << endl;
 	for(json followee : followees){
-
-		cout << "Start3" << endl;
 		if(profile == followee["user_id"]){
-			cout << "middle" << endl;
 			following = true;
 			break;
 		}
 	}
-	cout << "after" << endl;
 	json user = getUser(profile);
 	user["following"] = following;
-	cout << "end" << endl;
 	return user;
 }
 
@@ -517,6 +573,14 @@ json getUsers(int user_id){
 }
 
 json userFollowUser(int follower, int followee){
+	//////////////////////////////////
+	// This function could have simply inserted new data
+	// into the file. The current implementation reads the 
+	// entire file on every call. This is not ideal, but 
+	// it's the only way I can think of that verifies the 
+	// integrity of user data and prevent duplicate data.
+	// Need some feedback.
+	//////////////////////////////////
 	json response;
 	const uint line_len = ID_LEN + ID_LEN + 2;
 
@@ -659,6 +723,11 @@ json getFollowers(int user_id){
 	return response;
 }
 
+//////////////////////////////////
+// Various functions to display messages
+// to the user. Feels like flask, easy
+// to use.
+//////////////////////////////////
 void flash(json &r,  const string &message, const string &type) {
 	r["fMessage"].push_back(message);
 	r["fType"].push_back(type);
@@ -684,6 +753,10 @@ void dFlash(json &r, const string &message) {
 	r["success"] = false;
 }
 
+//////////////////////////////////
+// Error handling. Same as flask. The
+// exception is caught in processRequest().
+//////////////////////////////////
 void abort(int errcode){
 	throw errcode;
 }
@@ -701,6 +774,13 @@ void safe_open(fstream &fs, string path, ios_base::openmode mode) {
 	}
 }
 
+//////////////////////////////////
+// Formats data to be inserted into files.
+// Formatted data have a fixed size to allow
+// easier file updates. If the fixed size 
+// changes, need to update entire file.
+// Data in
+//////////////////////////////////
 string format_string(string &str, uint width){
 	if(str.length() > width)
 		throw "Error: Format string too long.";
@@ -721,9 +801,12 @@ string format_int(uint i, uint width){
 	return ss.str();
 }
 
+//////////////////////////////////
+// Formats time to display on the web page.
+// Data out
+//////////////////////////////////
 string format_timestamp(time_t now, uint t){
 	double diff = difftime(now, (time_t)t);
-	cout << diff << endl;
 
 	string str;
 

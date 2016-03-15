@@ -235,6 +235,25 @@ def create_user(email, first_name, last_name, pwd1, pwd2):
     return response['success']
 
 
+def edit_user(email, first_name, last_name, password, pwd1, pwd2):
+    debug("edit_user Fuction")
+    request = {
+        'type': 'editUser',
+        'data': {
+            'user_id': session['id'],
+            'email': email,
+            'first_name': first_name,
+            'last_name': last_name,
+            'hashed_password': hashlib.sha512(password).hexdigest(),
+            'new_password': "" if (pwd1 == "") else hashlib.sha512(pwd1).hexdigest()
+        }
+    }
+
+    response = sendRequest(request)
+
+    return response['success']
+
+
 def delete_user(user_id, pwd):
     debug("delete_user Fuction")
     request = {
