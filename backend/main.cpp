@@ -407,9 +407,6 @@ json authUser(string email, string hashed_password) {
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
 
-	int l_id;
-	string l_email, l_hashed_password, l_first_name, l_last_name;
-
 	fstream fs;
 	safe_open(fs, USER_FILE, fstream::in | fstream::out);
 
@@ -419,6 +416,8 @@ json authUser(string email, string hashed_password) {
 		}
 
 		stringstream ss(line);
+		int l_id;
+		string l_email, l_hashed_password, l_first_name, l_last_name;
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		if(email.compare(l_email) == 0 && hashed_password.compare(l_hashed_password) == 0){
 			response["user_id"] = l_id;
@@ -447,8 +446,7 @@ json getUser(int user_id){
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
 
-	int l_id;
-	string l_email, l_hashed_password, l_first_name, l_last_name;
+	
 
 	fstream fs;
 	safe_open(fs, USER_FILE, fstream::in);
@@ -459,8 +457,10 @@ json getUser(int user_id){
 		}
 
 		stringstream ss(line);
+		int l_id;
+		string l_email, l_hashed_password, l_first_name, l_last_name;
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
-		if(user_id == l_id){
+		if(user_id == l_id && !l_email.empty()){
 			user["user_id"] = l_id;
 			user["email"] = l_email;
 			user["first_name"] = l_first_name;
@@ -563,7 +563,11 @@ json getMessagesBy(int user_id){
 json getMessagesFeed(int user_id){
 	json response;
 	json messages;
+	const uint line_len = ID_LEN + NAME_CHAR_LIMIT + MSG_LEN + 3;
 	json followees = getFollowees(user_id)["followees"];
+
+	string line, empty_line;
+	empty_line.resize(line_len, '*');
 
 	time_t current_time = time(NULL);
 	int timestamp, l_id;
@@ -572,8 +576,17 @@ json getMessagesFeed(int user_id){
 	fstream fs;
 	safe_open(fs, MSG_FILE, fstream::in);
 
-	while(fs >> timestamp >> l_id >> l_first_name >> l_last_name >> l_message){
+	while(getline(fs, line)){
+		if(line == empty_line){
+			continue;
+		}
+
+		stringstream ss(line);
+		ss >> timestamp >> l_id >> l_first_name >> l_last_name;
+		getline(ss, l_message);
+
 		for(json followee : followees){
+			cout << "Followee: " << followee["user_id"] << endl;
 			if(l_id == followee["user_id"]){
 				json message;
 				message["time"] = format_timestamp(current_time, timestamp);
@@ -602,8 +615,7 @@ json getUsers(int user_id){
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
 
-	int l_id;
-	string l_email, l_hashed_password, l_first_name, l_last_name;
+	
 
 	fstream fs;
 	safe_open(fs, USER_FILE, fstream::in);
@@ -615,8 +627,11 @@ json getUsers(int user_id){
 		}
 
 		stringstream ss(line);
+		int l_id;
+		string l_email, l_hashed_password, l_first_name, l_last_name;
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
-		if(user_id != l_id){
+
+		if(user_id != l_id && !l_email.empty()){
 			bool following = false;
 			for(json followee : followees){
 				if(l_id == followee["user_id"]){

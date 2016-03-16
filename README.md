@@ -33,3 +33,6 @@ Part 2
 Written by:
   - Minhtri Tran
   - Andy Tang
+
+
+TODO: delete user's following data.

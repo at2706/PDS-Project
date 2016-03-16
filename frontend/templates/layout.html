@@ -30,7 +30,7 @@
 										<li><a href="{{ url_for('users') }}">Users</a></li>
 								</ul>
 								<ul class="nav navbar-nav navbar-right">
-										{% if session['id'] %}
+										{% if session['username'] %}
 												<li><a href="{{ url_for('profile', user_id = session['id']) }}">{{ session['username'] }}</a></li>
 												<li><a href="{{ url_for('logout') }}">Logout</a></li>
 										{% else %}

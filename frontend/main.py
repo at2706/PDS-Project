@@ -355,6 +355,7 @@ def getMessagesBy(user_id):
 
 def getMessagesFeed(user_id):
     debug("getMessagesFeed Fuction")
+    debug(session)
     request = {
         'type': 'getMessagesFeed',
         'data': {
