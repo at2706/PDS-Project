@@ -308,8 +308,7 @@ json deleteUser(int user_id, string hashed_password){
 				fs.seekp(e_pos);
 				fs << empty_line;
 				fs.close();
-				sFlash(response, "Successfully deleted User.");
-				return response;
+				break;
 			}
 			else{
 				fs.close();
@@ -319,7 +318,36 @@ json deleteUser(int user_id, string hashed_password){
 		}
 	}
 	fs.close();
-	dFlash(response, "Delete Failed");
+
+	cout << "Cleaning follows file" << endl;
+
+	empty_line.resize(line_len, '*');
+
+	e_pos = 0;
+	int l_follower, l_followee;
+
+	safe_open(fs, FLW_FILE, fstream::in | fstream::out);
+
+
+	// I can't get it to alternate between reading and writing...
+	// Currently only deletes one entry
+	while(getline(fs, line)){
+		cout << "Line: " << line << endl;
+		stringstream ss(line);
+		ss >> l_follower >> l_followee;
+		if(user_id == l_follower || user_id == l_followee){
+			cout << "Flags: " << fs.good() << " " << fs.eof() << " " << fs.fail() << " " << fs.bad() << endl;
+			e_pos = fs.tellg();
+			e_pos -= line_len + 1;
+			fs.clear();
+			fs.seekp(e_pos);
+			fs << empty_line;
+			fs.close();
+		}
+	}
+
+	fs.close();
+	sFlash(response, "Successfully deleted User.");
 	return response;
 }
 
@@ -586,7 +614,6 @@ json getMessagesFeed(int user_id){
 		getline(ss, l_message);
 
 		for(json followee : followees){
-			cout << "Followee: " << followee["user_id"] << endl;
 			if(l_id == followee["user_id"]){
 				json message;
 				message["time"] = format_timestamp(current_time, timestamp);

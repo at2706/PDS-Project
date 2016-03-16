@@ -15,7 +15,6 @@ $(document).ready(function(){
     });
 
     $('#email').on('keyup focus', function() {
-
         //EMAIL_CHAR_LIMIT
         if(this.value.length > 60){
             this.setCustomValidity("Email is too long!");

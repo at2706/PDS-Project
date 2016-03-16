@@ -97,12 +97,13 @@ def profile(user_id):
         return redirect(url_for('login'))
 
     if request.method == 'POST':
-        password = request.form['password']
-        if session['id'] != user_id:
-            abort(401)
+        if request.form['password']:
+            password = request.form['password']
+            if session['id'] != user_id:
+                abort(401)
 
-        if delete_user(user_id, password):
-            return logout()
+            if delete_user(user_id, password):
+                return logout()
 
     return render_template(
         'user.html',
@@ -114,6 +115,8 @@ def profile(user_id):
 @app.route('/edit/<int:user_id>', methods=['post', 'get'])
 def edit(user_id):
     debug("edit Fuction")
+    if 'id' not in session:
+        return redirect(url_for('login'))
     if int(session['id']) != user_id:
         abort(403)
 
