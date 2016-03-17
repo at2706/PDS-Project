@@ -10,6 +10,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <math.h>
+#include <stdio.h>
 #include <time.h>
 
 using namespace std;
@@ -58,6 +59,8 @@ void dFlash(json &r, const string &message);
 void abort(int errcode);
 
 void safe_open(fstream &fs, string path, ios_base::openmode mode);
+void safe_remove(string file);
+void safe_rename(string oldname, string newname);
 string format_string(string &str, uint width);
 string format_int(uint i, uint width);
 string format_timestamp(time_t now, uint t);
@@ -319,34 +322,55 @@ json deleteUser(int user_id, string hashed_password){
 	}
 	fs.close();
 
-	cout << "Cleaning follows file" << endl;
-
-	empty_line.resize(line_len, '*');
-
-	e_pos = 0;
-	int l_follower, l_followee;
-
-	safe_open(fs, FLW_FILE, fstream::in | fstream::out);
-
-
-	// I can't get it to alternate between reading and writing...
-	// Currently only deletes one entry
-	while(getline(fs, line)){
-		cout << "Line: " << line << endl;
-		stringstream ss(line);
-		ss >> l_follower >> l_followee;
-		if(user_id == l_follower || user_id == l_followee){
-			cout << "Flags: " << fs.good() << " " << fs.eof() << " " << fs.fail() << " " << fs.bad() << endl;
-			e_pos = fs.tellg();
-			e_pos -= line_len + 1;
-			fs.clear();
-			fs.seekp(e_pos);
-			fs << empty_line;
-			fs.close();
-		}
+	// If user not found for some reason
+	if(e_pos == -1){
+		wFlash(response, "Failed to delete user.");
+		return response;
 	}
 
+
+	//Deleting Follows
+	int l_follower, l_followee;
+
+	fstream temp;
+	safe_open(fs, FLW_FILE, fstream::in);
+	safe_open(temp, "db/follows.temp", fstream::out);
+
+	// I can't get it to alternate between reading and writing...
+	// So I write valid entries into a new file and replace the old one
+	while(getline(fs, line)){
+		stringstream ss(line);
+		ss >> l_follower >> l_followee;
+		if(user_id != l_follower && user_id != l_followee){
+			temp << line << endl;
+		}
+	}
+	temp.close();
 	fs.close();
+
+	safe_remove(FLW_FILE);
+	safe_rename("db/follows.temp", FLW_FILE);
+
+	//Deleting Messages
+	int timestamp;
+
+	safe_open(fs, MSG_FILE, fstream::in);
+	safe_open(temp, "db/messages.temp", fstream::out);
+
+	while(getline(fs, line)){
+		stringstream ss(line);
+		ss >> timestamp >> l_id;
+
+		if(user_id != l_id){
+			temp << line << endl;
+		}
+	}
+	temp.close();
+	fs.close();
+
+	safe_remove(MSG_FILE);
+	safe_rename("db/messages.temp", MSG_FILE);
+
 	sFlash(response, "Successfully deleted User.");
 	return response;
 }
@@ -529,6 +553,7 @@ json postMessage(int user_id, string username, string message) {
 	}
 
 	time_t current_time = time(NULL);
+	replace(message.begin(), message.end(), '\n', ' ');
 
 	fstream fs;
 	safe_open(fs, MSG_FILE, fstream::out | fstream::app);
@@ -882,6 +907,16 @@ void safe_open(fstream &fs, string path, ios_base::openmode mode) {
 	if (!fs.is_open()) {
 		throw "Error: failed to open file: \"" + path + "\"";
 	}
+}
+
+void safe_remove(string file){
+	if(remove(file.c_str()) != 0)
+		throw "Error: failed to remove file: \"" + file + "\"";
+}
+
+void safe_rename(string oldname, string newname){
+	if(rename(oldname.c_str(), newname.c_str()) != 0)
+		throw "Error failed to rename file: \"" + oldname + "\"";
 }
 
 //////////////////////////////////

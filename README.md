@@ -24,7 +24,6 @@ Part 2
         users: id(4) email(60) hashed_password(128) full_name(60)
         follows: follower(4) followee(4)
         messages: time(10) id(4) full_name(60) message(100)
-    Deleting users will remove user data. However, messages sent by that user will persist. User IDs will never be reused.
 
   - Form validation: character limits.
     User Delete: now requires password.
@@ -33,6 +32,3 @@ Part 2
 Written by:
   - Minhtri Tran
   - Andy Tang
-
-
-TODO: delete user's following data.
