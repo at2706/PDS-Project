@@ -39,6 +39,9 @@ def home():
 @app.route("/register", methods=['post', 'get'])
 def register():
     debug("register Fuction")
+    if 'id' in session:
+        flash("You're already logged in!", "warning")
+        return redirect(url_for('home'))
     if request.method == 'POST':
         email = request.form['email']
         first_name = request.form['first_name']

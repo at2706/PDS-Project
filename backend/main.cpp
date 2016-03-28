@@ -76,7 +76,7 @@ void processConnection(int sock_fd){
 	close(sock_fd);
 }
 
-//route request based on 'type' field
+// route request based on 'type' field
 json processRequest(json request) {
 	json response;
 	response["success"] = true;
@@ -165,7 +165,7 @@ json processRequest(json request) {
 
 json createUser(string email, string first_name, string last_name, string hashed_password) {
 	json response;
-	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 3;
+	const uint line_len = USER_LINE_LEN;
 
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
@@ -174,7 +174,7 @@ json createUser(string email, string first_name, string last_name, string hashed
 	int e_pos = -1, id = 0, l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
-	safe_open(user_file, fstream::in | fstream::out);
+	user_file.open(fstream::in | fstream::out);
 
 	while(getline(user_file.fs, line)){
 		if(line == empty_line){
@@ -188,7 +188,7 @@ json createUser(string email, string first_name, string last_name, string hashed
 		stringstream ss(line);
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		if(email.compare(l_email) == 0){
-			safe_close(user_file);
+			user_file.close();
 			dFlash(response, "That email is already taken.");
 			return response;
 		}
@@ -197,7 +197,6 @@ json createUser(string email, string first_name, string last_name, string hashed
 	user_file.fs.clear();
 	user_file.fs.seekg(-ID_LEN, fstream::end);
 	user_file.fs >> id;
-
 	user_file.fs.clear();
 
 	if(e_pos == -1)
@@ -220,14 +219,14 @@ json createUser(string email, string first_name, string last_name, string hashed
 	cout << "Seek  " << user_file.fs.tellp() << "   " << id << endl;
 	user_file.fs << format_int(id + 1, ID_LEN);
 
-	safe_close(user_file);
+	user_file.close();
 	iFlash(response, "Successfully created user.");
 	return response;
 }
 
 json deleteUser(int user_id, string hashed_password){
 	json response;
-	uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 3;
+	uint line_len = USER_LINE_LEN;
 
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
@@ -235,7 +234,7 @@ json deleteUser(int user_id, string hashed_password){
 	int e_pos = -1, l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
-	safe_open(user_file, fstream::in | fstream::out);
+	user_file.open(fstream::in | fstream::out);
 
 	while(getline(user_file.fs, line)){
 		stringstream ss(line);
@@ -247,17 +246,17 @@ json deleteUser(int user_id, string hashed_password){
 				user_file.fs.clear();
 				user_file.fs.seekp(e_pos);
 				user_file.fs << empty_line;
-				safe_close(user_file);
+				user_file.close();
 				break;
 			}
 			else{
-				safe_close(user_file);
+				user_file.close();
 				wFlash(response, "Incorrect password.");
 				return response;
 			}
 		}
 	}
-	safe_close(user_file);
+	user_file.close();
 
 	// If user not found for some reason
 	if(e_pos == -1){
@@ -271,7 +270,7 @@ json deleteUser(int user_id, string hashed_password){
 
 json editUser(int user_id, string email, string first_name, string last_name, string hashed_password, string new_password){
 	json response;
-	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 3;
+	const uint line_len = USER_LINE_LEN;
 
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
@@ -280,7 +279,7 @@ json editUser(int user_id, string email, string first_name, string last_name, st
 	int e_pos = -1, l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
-	safe_open(user_file, fstream::in | fstream::out);
+	user_file.open(fstream::in | fstream::out);
 
 	while(getline(user_file.fs, line)){
 		if(line == empty_line){
@@ -291,7 +290,7 @@ json editUser(int user_id, string email, string first_name, string last_name, st
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		if(user_id == l_id){
 			if(hashed_password.compare(l_hashed_password) != 0){
-				safe_close(user_file);
+				user_file.close();
 				dFlash(response, "Invaid Password.");
 				return response;
 			}
@@ -305,14 +304,13 @@ json editUser(int user_id, string email, string first_name, string last_name, st
 
 		}
 		else if(email.compare(l_email) == 0){
-			safe_close(user_file);
+			user_file.close();
 			wFlash(response, "That email is taken.");
 			return response;
 		}
 	}
 	user_file.fs.clear();
 
-	// TODO: Make atomic
 	if(!email.empty()){
 		user_file.fs.seekp(e_pos + ID_LEN + 1);
 		user_file.fs << format_string(email, EMAIL_CHAR_LIMIT);
@@ -339,20 +337,20 @@ json editUser(int user_id, string email, string first_name, string last_name, st
 		user_file.fs << format_string(new_full_name, NAME_CHAR_LIMIT);
 	}
 
-	safe_close(user_file);
+	user_file.close();
 	sFlash(response, "Successfully updated user information.");
 	return response;
 }
 
-//corresponds with login_user
+// corresponds with login_user
 json authUser(string email, string hashed_password) {
 	json response;
-	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 3;
+	const uint line_len = USER_LINE_LEN;
 
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
 
-	safe_open(user_file, fstream::in | fstream::out);
+	user_file.open(fstream::in | fstream::out);
 
 	while(getline(user_file.fs, line)){
 		if(line == empty_line){
@@ -369,14 +367,14 @@ json authUser(string email, string hashed_password) {
 			response["first_name"] = l_first_name;
 			response["last_name"] = l_last_name;
 			sFlash(response, "Successfully Logged in.");
-			safe_close(user_file);
+			user_file.close();
 			return response;
 		}
 	}
 
 
 	wFlash(response, "Bad log in.");
-	safe_close(user_file);
+	user_file.close();
 	return response;
 }
 
@@ -385,12 +383,12 @@ json authUser(string email, string hashed_password) {
 // Error 400: Bad Request!
 json getUser(int user_id){
 	json user;
-	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 3;
+	const uint line_len = USER_LINE_LEN;
 
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
 
-	safe_open(user_file, fstream::in);
+	user_file.open(fstream::in);
 
 	while(getline(user_file.fs, line)){
 		if(line == empty_line){
@@ -407,13 +405,13 @@ json getUser(int user_id){
 			user["first_name"] = l_first_name;
 			user["last_name"] = l_last_name;
 
-			safe_close(user_file);
+			user_file.close();
 			user["success"] = true;
 			return user;
 		}
 	}
 
-	safe_close(user_file);
+	user_file.close();
 	abort(400);
 	return user;
 }
@@ -444,7 +442,7 @@ json postMessage(int user_id, string username, string message) {
 	time_t current_time = time(NULL);
 	replace(message.begin(), message.end(), '\n', ' ');
 
-	safe_open(msg_file, fstream::out | fstream::app);
+	msg_file.open(fstream::out | fstream::app);
 
 	// Will have to format time by 11/20/2286
 	msg_file.fs  << current_time << "\t" 
@@ -453,7 +451,7 @@ json postMessage(int user_id, string username, string message) {
 		<< format_string(message, MSG_LEN)
 		<< endl;
 
-	safe_close(msg_file);
+	msg_file.close();
 	iFlash(response, "Message posted.");
 	return response;
 }
@@ -461,7 +459,7 @@ json postMessage(int user_id, string username, string message) {
 json getMessagesBy(int user_id){
 	json response;
 	json messages;
-	const uint line_len = ID_LEN + NAME_CHAR_LIMIT + MSG_LEN + 3;
+	const uint line_len = MSG_LINE_LEN;
 
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
@@ -470,7 +468,7 @@ json getMessagesBy(int user_id){
 	int timestamp, l_id;
 	string l_first_name, l_last_name, l_message;
 
-	safe_open(msg_file, fstream::in);
+	msg_file.open(fstream::in);
 
 	while(getline(msg_file.fs, line)){
 		if(line == empty_line){
@@ -492,7 +490,7 @@ json getMessagesBy(int user_id){
 		}
 	}
 
-	safe_close(msg_file);
+	msg_file.close();
 
 	reverse(messages.begin(), messages.end());
 	response["messages"] = messages;
@@ -503,7 +501,7 @@ json getMessagesBy(int user_id){
 json getMessagesFeed(int user_id){
 	json response;
 	json messages;
-	const uint line_len = ID_LEN + NAME_CHAR_LIMIT + MSG_LEN + 3;
+	const uint line_len = MSG_LINE_LEN;
 	json followees = getFollowees(user_id)["followees"];
 
 	string line, empty_line;
@@ -513,7 +511,7 @@ json getMessagesFeed(int user_id){
 	int timestamp, l_id;
 	string l_first_name, l_last_name, l_message;
 
-	safe_open(msg_file, fstream::in);
+	msg_file.open(fstream::in);
 
 	while(getline(msg_file.fs, line)){
 		if(line == empty_line){
@@ -536,7 +534,7 @@ json getMessagesFeed(int user_id){
 			}
 		}
 	}
-	safe_close(msg_file);
+	msg_file.close();
 
 	reverse(messages.begin(), messages.end());
 	response["messages"] = messages;
@@ -548,13 +546,13 @@ json getUsers(int user_id){
 	json response;
 	json users;
 	json followees = getFollowees(user_id)["followees"];
-	const uint line_len = ID_LEN + EMAIL_CHAR_LIMIT + 128 + NAME_CHAR_LIMIT + 3;
+	const uint line_len = USER_LINE_LEN;
 
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
 
 	
-	safe_open(user_file, fstream::in);
+	user_file.open(fstream::in);
 
 
 	while(getline(user_file.fs, line)){
@@ -583,7 +581,7 @@ json getUsers(int user_id){
 			users.push_back(user);
 		}
 	}
-	safe_close(user_file);
+	user_file.close();
 
 	response["users"] = users;
 
@@ -601,14 +599,14 @@ json userFollowUser(int follower, int followee){
 	// feedback.
 	//////////////////////////////////
 	json response;
-	const uint line_len = ID_LEN + ID_LEN + 1;
+	const uint line_len = FLW_LINE_LEN;
 
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
 
 	int e_pos = -1, l_follower, l_followee;
 
-	safe_open(flw_file, fstream::in | fstream::out);
+	flw_file.open(fstream::in | fstream::out);
 
 	while(getline(flw_file.fs, line)){
 		if(line == empty_line){
@@ -636,7 +634,7 @@ json userFollowUser(int follower, int followee){
 
 	flw_file.fs  << format_int(follower, ID_LEN) << "\t" 
 		<< format_int(followee, ID_LEN) << endl;
-	safe_close(flw_file);
+	flw_file.close();
 
 	sFlash(response, "Follow user successful!");
 	return response;
@@ -644,7 +642,7 @@ json userFollowUser(int follower, int followee){
 
 json userUnfollowUser(int follower, int followee){
 	json response;
-	const uint line_len = ID_LEN + ID_LEN + 1;
+	const uint line_len = FLW_LINE_LEN;
 
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
@@ -652,7 +650,7 @@ json userUnfollowUser(int follower, int followee){
 	uint e_pos = -1;
 	int l_follower, l_followee;
 
-	safe_open(flw_file, fstream::in | fstream::out);
+	flw_file.open(fstream::in | fstream::out);
 
 	while(getline(flw_file.fs, line)){
 		stringstream ss(line);
@@ -663,12 +661,12 @@ json userUnfollowUser(int follower, int followee){
 			flw_file.fs.clear();
 			flw_file.fs.seekp(e_pos);
 			flw_file.fs << empty_line;
-			safe_close(flw_file);
+			flw_file.close();
 			sFlash(response, "Unfollow user successful!");
 			return response;
 		}
 	}
-	safe_close(flw_file);
+	flw_file.close();
 
 	wFlash(response, "You're not following that user.");
 	return response;
@@ -681,7 +679,7 @@ json getFollowees(int user_id){
 	string line;
 	int l_follower, l_followee;
 
-	safe_open(flw_file, fstream::in);
+	flw_file.open(fstream::in);
 	while(getline(flw_file.fs, line)){
 		stringstream ss(line);
 		ss >> l_follower >> l_followee;
@@ -700,7 +698,7 @@ json getFollowees(int user_id){
 			}
 		}
 	}
-	safe_close(flw_file);
+	flw_file.close();
 
 	response["followees"] = followees;
 	return response;
@@ -713,7 +711,7 @@ json getFollowers(int user_id){
 	string line;
 	int l_follower, l_followee;
 
-	safe_open(flw_file, fstream::in);
+	flw_file.open(fstream::in);
 	while(getline(flw_file.fs, line)){
 		stringstream ss(line);
 		ss >> l_follower >> l_followee;
@@ -732,50 +730,11 @@ json getFollowers(int user_id){
 			}
 		}
 	}
-	safe_close(flw_file);
+	flw_file.close();
 
 	response["followers"] = followers;
 	return response;
 }
-
-//////////////////////////////////
-// Various functions to display messages
-// to the user. Feels like flask, easy
-// to use.
-//////////////////////////////////
-void flash(json &r,  const string &message, const string &type) {
-	r["fMessage"].push_back(message);
-	r["fType"].push_back(type);
-}
-
-void sFlash(json &r, const string &message) {
-	flash(r, message, "success");
-	r["success"] = true;
-}
-
-void iFlash(json &r, const string &message) {
-	flash(r, message, "info");
-	r["success"] = true;
-}
-
-void wFlash(json &r, const string &message) {
-	flash(r, message, "warning");
-	r["success"] = false;
-}
-
-void dFlash(json &r, const string &message) {
-	flash(r, message, "danger");
-	r["success"] = false;
-}
-
-//////////////////////////////////
-// Error handling. Same as flask. The
-// exception is caught in processRequest().
-//////////////////////////////////
-void abort(int errcode){
-	throw errcode;
-}
-
 
 //////////////////////////////////
 // Formats data to be inserted into files.

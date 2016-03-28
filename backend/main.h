@@ -1,10 +1,11 @@
+#pragma once
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <algorithm>
 #include <thread>
 #include "json.hpp"
-#include "fileAssistant.h"
+#include "SharedFile.h"
 
 #include <string.h>
 #include <sys/socket.h>
@@ -31,6 +32,21 @@ using json = nlohmann::json;
 // Message size: 178 bytes
 #define MSG_LEN 100
 
+// Misc
+#define HASH_LEN 128
+#define TIME_LEN 10
+
+// Line lengths in each file: including tabs, excluding the last \n
+#define USER_LINE_LEN ID_LEN + EMAIL_CHAR_LIMIT + HASH_LEN + NAME_CHAR_LIMIT + 3
+#define MSG_LINE_LEN TIME_LEN + ID_LEN + NAME_CHAR_LIMIT + MSG_LEN + 4
+#define FLW_LINE_LEN ID_LEN + ID_LEN + 1
+
+//////////////////////////////////
+// Global Shared File Variables
+//////////////////////////////////
+SharedFile user_file(USER_FILE, USER_LINE_LEN),
+			msg_file(MSG_FILE, MSG_LINE_LEN),
+			flw_file(FLW_FILE, FLW_LINE_LEN);
 
 int setUpServer(int server_port);
 void processConnection(int sock_fd);
@@ -51,13 +67,39 @@ json userUnfollowUser(int follower, int followee);
 json getFollowees(int user_id);
 json getFollowers(int user_id);
 
-void flash(json &r,  const string &message, const string &type);
-void sFlash(json &r, const string &message);
-void iFlash(json &r, const string &message);
-void wFlash(json &r, const string &message);
-void dFlash(json &r, const string &message);
-void abort(int errcode);
-
 string format_string(string &str, uint width);
 string format_int(uint i, uint width);
 string format_timestamp(time_t now, uint t);
+
+//////////////////////////////////
+// Various functions to display messages
+// to the user. Feels like flask, easy
+// to use.
+//////////////////////////////////
+inline void flash(json &r,  const string &message, const string &type) {
+	r["fMessage"].push_back(message);
+	r["fType"].push_back(type);
+}
+inline void sFlash(json &r, const string &message) {
+	flash(r, message, "success");
+	r["success"] = true;
+}
+inline void iFlash(json &r, const string &message) {
+	flash(r, message, "info");
+	r["success"] = true;
+}
+inline void wFlash(json &r, const string &message) {
+	flash(r, message, "warning");
+	r["success"] = false;
+}
+inline void dFlash(json &r, const string &message) {
+	flash(r, message, "danger");
+	r["success"] = false;
+}
+//////////////////////////////////
+// Error handling. Same as flask. The
+// exception is caught in processRequest().
+//////////////////////////////////
+inline void abort(int errcode){
+	throw errcode;
+}
