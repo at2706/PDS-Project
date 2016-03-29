@@ -53,7 +53,7 @@ int setUpServer(int server_port) {
 }
 
 void processConnection(int sock_fd){
-	//read request
+	// read request
 	char msg_buf[BUFFER_SIZE];
 	memset(&msg_buf, 0, sizeof(msg_buf));
 	if (read(sock_fd, msg_buf, BUFFER_SIZE) == -1) {
@@ -171,20 +171,12 @@ json createUser(string email, string first_name, string last_name, string hashed
 	empty_line.resize(line_len, '*');
 
 
-	int e_pos = -1, id = 0, l_id;
+	int id = 0, l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
 	user_file.open(fstream::in | fstream::out);
 
-	while(getline(user_file.fs, line)){
-		if(line == empty_line){
-			if(e_pos == -1){
-				e_pos = user_file.fs.tellg();
-				e_pos -= line_len + 1;
-			}
-			continue;
-		}
-
+	while(user_file.read(line)){
 		stringstream ss(line);
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		if(email.compare(l_email) == 0){
@@ -199,20 +191,13 @@ json createUser(string email, string first_name, string last_name, string hashed
 	user_file.fs >> id;
 	user_file.fs.clear();
 
-	if(e_pos == -1)
-		user_file.fs.seekp(-ID_LEN, fstream::end);
-	else{
-		user_file.fs.seekp(e_pos);
-	}
-
 	string name = first_name + " " + last_name;
-	user_file.fs  << format_int(id, ID_LEN) << "\t" 
-		<< format_string(email, EMAIL_CHAR_LIMIT) << "\t" 
-		<< hashed_password << "\t"
-		<< format_string(name, NAME_CHAR_LIMIT)
-		<< endl;
+	bool filled = user_file.insert(format_int(id, ID_LEN) + "\t" 
+		+ format_string(email, EMAIL_CHAR_LIMIT) + "\t" 
+		+ hashed_password + "\t"
+		+ format_string(name, NAME_CHAR_LIMIT), -ID_LEN);
 
-	if(e_pos != -1){
+	if(filled){
 		user_file.fs.clear();
 		user_file.fs.seekp(-ID_LEN, fstream::end);
 	}
@@ -231,21 +216,18 @@ json deleteUser(int user_id, string hashed_password){
 	string line, empty_line;
 	empty_line.resize(line_len, '*');
 
-	int e_pos = -1, l_id;
+	bool removed = false;
+	int l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
 	user_file.open(fstream::in | fstream::out);
 
-	while(getline(user_file.fs, line)){
+	while(user_file.read(line)){
 		stringstream ss(line);
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		if(user_id == l_id){
 			if(hashed_password.compare(l_hashed_password) == 0){
-				e_pos = user_file.fs.tellg();
-				e_pos -= line_len + 1;
-				user_file.fs.clear();
-				user_file.fs.seekp(e_pos);
-				user_file.fs << empty_line;
+				removed = user_file.remove();
 				user_file.close();
 				break;
 			}
@@ -259,7 +241,7 @@ json deleteUser(int user_id, string hashed_password){
 	user_file.close();
 
 	// If user not found for some reason
-	if(e_pos == -1){
+	if(!removed){
 		wFlash(response, "Failed to delete user.");
 		return response;
 	}
@@ -268,7 +250,8 @@ json deleteUser(int user_id, string hashed_password){
 	return response;
 }
 
-json editUser(int user_id, string email, string first_name, string last_name, string hashed_password, string new_password){
+json editUser(int user_id, string email, string first_name, string last_name,
+				string hashed_password, string new_password){
 	json response;
 	const uint line_len = USER_LINE_LEN;
 
@@ -352,11 +335,7 @@ json authUser(string email, string hashed_password) {
 
 	user_file.open(fstream::in | fstream::out);
 
-	while(getline(user_file.fs, line)){
-		if(line == empty_line){
-			continue;
-		}
-
+	while(user_file.read(line)){
 		stringstream ss(line);
 		int l_id;
 		string l_email, l_hashed_password, l_first_name, l_last_name;
@@ -628,9 +607,8 @@ json userFollowUser(int follower, int followee){
 
 	if(e_pos == -1)
 		flw_file.fs.seekp(0, fstream::end);
-	else{
+	else
 		flw_file.fs.seekp(e_pos);
-	}
 
 	flw_file.fs  << format_int(follower, ID_LEN) << "\t" 
 		<< format_int(followee, ID_LEN) << endl;
@@ -734,62 +712,4 @@ json getFollowers(int user_id){
 
 	response["followers"] = followers;
 	return response;
-}
-
-//////////////////////////////////
-// Formats data to be inserted into files.
-// Formatted data have a fixed size to allow
-// easier file updates. If the fixed size 
-// changes, need to update entire file.
-// Data in
-//////////////////////////////////
-string format_string(string &str, uint width){
-	if(str.length() > width)
-		throw "Error: Format string too long.";
-
-	str.resize(width, ' ');
-	return str;
-}
-
-string format_int(uint i, uint width){
-	if(i > pow(10, width) - 1)
-		throw "Error: Format int too big.";
-	stringstream ss;
-	ss.width(width);
-	ss.fill('0');
-	//int Align Left
-	ss << right << i;
-
-	return ss.str();
-}
-
-//////////////////////////////////
-// Formats time to display on the web page.
-// Data out
-//////////////////////////////////
-string format_timestamp(time_t now, uint t){
-	double diff = difftime(now, (time_t)t);
-
-	string str;
-
-	if(diff < 10)
-		str = "Just now";
-	else if(diff < 60)
-		str = to_string((int)diff) + " seconds ago.";
-	else if (diff< 3600){
-		int min = diff / 60;
-		str = to_string(min);
-		str += (min == 1) ? " minute ago." : " minutes ago.";
-	}
-	else if (diff< 86400){
-		int hour = diff / 3600;
-		str = to_string(hour);
-		str += (hour == 1) ? " hour ago." : " hours ago.";
-	}
-	else{
-		int day = diff / 86400;
-		str = to_string(day);
-		str += (day == 1) ? " day ago." : " days ago.";
-	}
-	return str;
 }

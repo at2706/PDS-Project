@@ -54,7 +54,8 @@ json processRequest(json request);
 
 json createUser(string email, string first_name, string last_name, string hashed_password);
 json deleteUser(int user_id, string hashed_password);
-json editUser(int user_id, string email, string first_name, string last_name, string hashed_password, string new_password);
+json editUser(	int user_id, string email, string first_name, string last_name,
+				string hashed_password, string new_password);
 json authUser(string email, string hashed_password);
 json getUser(int user_id);
 json getProfile(int user_id, int profile);
@@ -102,4 +103,62 @@ inline void dFlash(json &r, const string &message) {
 //////////////////////////////////
 inline void abort(int errcode){
 	throw errcode;
+}
+
+//////////////////////////////////
+// Formats data to be inserted into files.
+// Formatted data have a fixed size to allow
+// easier file updates. If the fixed size 
+// changes, need to update entire file.
+// Data in
+//////////////////////////////////
+inline string format_string(string &str, uint width){
+	if(str.length() > width)
+		throw "Error: Format string too long.";
+
+	str.resize(width, ' ');
+	return str;
+}
+
+inline string format_int(uint i, uint width){
+	if(i > pow(10, width) - 1)
+		throw "Error: Format int too big.";
+	stringstream ss;
+	ss.width(width);
+	ss.fill('0');
+	//int Align Left
+	ss << right << i;
+
+	return ss.str();
+}
+
+//////////////////////////////////
+// Formats time to display on the web page.
+// Data out
+//////////////////////////////////
+inline string format_timestamp(time_t now, uint t){
+	double diff = difftime(now, (time_t)t);
+
+	string str;
+
+	if(diff < 10)
+		str = "Just now";
+	else if(diff < 60)
+		str = to_string((int)diff) + " seconds ago.";
+	else if (diff< 3600){
+		int min = diff / 60;
+		str = to_string(min);
+		str += (min == 1) ? " minute ago." : " minutes ago.";
+	}
+	else if (diff< 86400){
+		int hour = diff / 3600;
+		str = to_string(hour);
+		str += (hour == 1) ? " hour ago." : " hours ago.";
+	}
+	else{
+		int day = diff / 86400;
+		str = to_string(day);
+		str += (day == 1) ? " day ago." : " days ago.";
+	}
+	return str;
 }
