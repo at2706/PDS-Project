@@ -20,8 +20,8 @@ int main(int argc, char const *argv[]) {
 	return 0;
 }
 
-//Set up server using the given port
-//Returns the server file descriptor
+// Set up server using the given port
+// Returns the server file descriptor
 int setUpServer(int server_port) {
 	//create socket
 	int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -101,10 +101,6 @@ json processRequest(json request) {
 		else if(request["type"] == "authUser"){
 			response = authUser(request["data"]["email"], request["data"]["hashed_password"]);
 		}
-		// No longer needed.
-		// else if(request["type"] == "getUser"){
-		// 	response = getUser(request["data"]["user_id"]);
-		// }
 		else if(request["type"] == "getProfile"){
 			response = getProfile(request["data"]["user_id"], request["data"]["profile"]);
 		}
@@ -163,19 +159,16 @@ json processRequest(json request) {
 	return response;
 }
 
+//////////////////////////////////
+// Files Accessed: users(read/write)
+// Exceptions: format_string/int
 json createUser(string email, string first_name, string last_name, string hashed_password) {
 	json response;
-	const uint line_len = USER_LINE_LEN;
-
-	string line, empty_line;
-	empty_line.resize(line_len, '*');
-
-
+	string line
 	int id = 0, l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
 	user_file.open(fstream::in | fstream::out);
-
 	while(user_file.read(line)){
 		stringstream ss(line);
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
@@ -184,8 +177,8 @@ json createUser(string email, string first_name, string last_name, string hashed
 			dFlash(response, "That email is already taken.");
 			return response;
 		}
-
 	}
+	// Retrieve ID located at EOF
 	user_file.fs.clear();
 	user_file.fs.seekg(-ID_LEN, fstream::end);
 	user_file.fs >> id;
@@ -197,11 +190,15 @@ json createUser(string email, string first_name, string last_name, string hashed
 		+ hashed_password + "\t"
 		+ format_string(name, NAME_CHAR_LIMIT), -ID_LEN);
 
+	// If user data got inserted at EOF, 
+	// then the next ID has been overwritten.
+	// Otherwise, seek ID_LEN bytes from EOF
+	// to overwrite the next ID.
 	if(filled){
 		user_file.fs.clear();
 		user_file.fs.seekp(-ID_LEN, fstream::end);
 	}
-	cout << "Seek  " << user_file.fs.tellp() << "   " << id << endl;
+
 	user_file.fs << format_int(id + 1, ID_LEN);
 
 	user_file.close();
@@ -209,12 +206,13 @@ json createUser(string email, string first_name, string last_name, string hashed
 	return response;
 }
 
+//////////////////////////////////
+// Files Accessed: users(read/write)
 json deleteUser(int user_id, string hashed_password){
 	json response;
 	uint line_len = USER_LINE_LEN;
 
-	string line, empty_line;
-	empty_line.resize(line_len, '*');
+	string line;
 
 	bool removed = false;
 	int l_id;
@@ -250,25 +248,19 @@ json deleteUser(int user_id, string hashed_password){
 	return response;
 }
 
-json editUser(int user_id, string email, string first_name, string last_name,
-				string hashed_password, string new_password){
+//////////////////////////////////
+// Files Accessed: users(read/write)
+json editUser(int user_id, string email, string first_name, string last_name, string hashed_password, string new_password){
 	json response;
 	const uint line_len = USER_LINE_LEN;
 
-	string line, empty_line;
-	empty_line.resize(line_len, '*');
-
+	string line;
 
 	int e_pos = -1, l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
 	user_file.open(fstream::in | fstream::out);
-
-	while(getline(user_file.fs, line)){
-		if(line == empty_line){
-			continue;
-		}
-
+	while(user_file.read(line)){
 		stringstream ss(line);
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		if(user_id == l_id){
@@ -325,16 +317,14 @@ json editUser(int user_id, string email, string first_name, string last_name,
 	return response;
 }
 
-// corresponds with login_user
+//////////////////////////////////
+// Files Accessed: users(read)
 json authUser(string email, string hashed_password) {
 	json response;
-	const uint line_len = USER_LINE_LEN;
 
-	string line, empty_line;
-	empty_line.resize(line_len, '*');
+	string line;
 
 	user_file.open(fstream::in | fstream::out);
-
 	while(user_file.read(line)){
 		stringstream ss(line);
 		int l_id;
@@ -351,29 +341,20 @@ json authUser(string email, string hashed_password) {
 		}
 	}
 
-
 	wFlash(response, "Bad log in.");
 	user_file.close();
 	return response;
 }
 
-// Now used internally only.
-// Throws exception if user does not exist.
-// Error 400: Bad Request!
+//////////////////////////////////
+// Files Accessed: users(read)
+// Exceptions: abort(400) Bad Request!
 json getUser(int user_id){
 	json user;
-	const uint line_len = USER_LINE_LEN;
-
-	string line, empty_line;
-	empty_line.resize(line_len, '*');
+	string line;
 
 	user_file.open(fstream::in);
-
-	while(getline(user_file.fs, line)){
-		if(line == empty_line){
-			continue;
-		}
-
+	while(user_file.read(line)){
 		stringstream ss(line);
 		int l_id;
 		string l_email, l_hashed_password, l_first_name, l_last_name;
@@ -395,6 +376,9 @@ json getUser(int user_id){
 	return user;
 }
 
+//////////////////////////////////
+// Files Accessed: users(read/write), follows(read/write)
+// Exceptions: abort(400) Bad Request!
 json getProfile(int user_id, int profile){
 	bool following = false;
 	json followees = getFollowees(user_id)["followees"];
@@ -409,6 +393,9 @@ json getProfile(int user_id, int profile){
 	return user;
 }
 
+//////////////////////////////////
+// Files Accessed: messages(write)
+// Exceptions: format_string/int
 json postMessage(int user_id, string username, string message) {
 	json response;
 
@@ -423,45 +410,38 @@ json postMessage(int user_id, string username, string message) {
 
 	msg_file.open(fstream::out | fstream::app);
 
-	// Will have to format time by 11/20/2286
-	msg_file.fs  << current_time << "\t" 
-		<< format_int(user_id, ID_LEN) << "\t" 
-		<< format_string(username, NAME_CHAR_LIMIT) << "\t"
-		<< format_string(message, MSG_LEN)
-		<< endl;
+	msg_file.insert(format_int(user_id, ID_LEN) + "\t" 
+		+ format_int(current_time, TIME_LEN) + "\t" 
+		+ format_string(username, NAME_CHAR_LIMIT) + "\t"
+		+ format_string(message, MSG_LEN));
 
 	msg_file.close();
 	iFlash(response, "Message posted.");
 	return response;
 }
 
+//////////////////////////////////
+// Files Accessed: messages(read)
 json getMessagesBy(int user_id){
 	json response;
 	json messages;
-	const uint line_len = MSG_LINE_LEN;
 
-	string line, empty_line;
-	empty_line.resize(line_len, '*');
-
-	time_t current_time = time(NULL);
-	int timestamp, l_id;
+	string line;
+	time_t timestamp, 
+	current_time = time(NULL);
+	int l_id;
 	string l_first_name, l_last_name, l_message;
 
 	msg_file.open(fstream::in);
-
-	while(getline(msg_file.fs, line)){
-		if(line == empty_line){
-			continue;
-		}
-
+	while(msg_file.read(line)){
 		stringstream ss(line);
-		ss >> timestamp >> l_id >> l_first_name >> l_last_name;
+		ss  >> l_id >> timestamp >> l_first_name >> l_last_name;
 		getline(ss, l_message);
 
 		if(user_id == l_id){
 			json message;
-			message["time"] = format_timestamp(current_time, timestamp);
 			message["user_id"] = l_id;
+			message["time"] = format_timestamp(current_time, timestamp);
 			message["first_name"] = l_first_name;
 			message["last_name"] = l_last_name;
 			message["message"] = l_message;
@@ -477,35 +457,30 @@ json getMessagesBy(int user_id){
 	return response;
 }
 
+//////////////////////////////////
+// Files Accessed: messages(read)
 json getMessagesFeed(int user_id){
 	json response;
 	json messages;
-	const uint line_len = MSG_LINE_LEN;
 	json followees = getFollowees(user_id)["followees"];
 
-	string line, empty_line;
-	empty_line.resize(line_len, '*');
-
-	time_t current_time = time(NULL);
-	int timestamp, l_id;
+	string line;
+	time_t timestamp, 
+	current_time = time(NULL);
+	int l_id;
 	string l_first_name, l_last_name, l_message;
 
 	msg_file.open(fstream::in);
-
-	while(getline(msg_file.fs, line)){
-		if(line == empty_line){
-			continue;
-		}
-
+	while(msg_file.read(line)){
 		stringstream ss(line);
-		ss >> timestamp >> l_id >> l_first_name >> l_last_name;
+		ss >> l_id >> timestamp >> l_first_name >> l_last_name;
 		getline(ss, l_message);
 
 		for(json followee : followees){
 			if(l_id == followee["user_id"]){
 				json message;
-				message["time"] = format_timestamp(current_time, timestamp);
 				message["user_id"] = l_id;
+				message["time"] = format_timestamp(current_time, timestamp);
 				message["first_name"] = l_first_name;
 				message["last_name"] = l_last_name;
 				message["message"] = l_message;
@@ -521,24 +496,17 @@ json getMessagesFeed(int user_id){
 	return response;
 }
 
+//////////////////////////////////
+// Files Accessed: users(read)
 json getUsers(int user_id){
 	json response;
 	json users;
 	json followees = getFollowees(user_id)["followees"];
-	const uint line_len = USER_LINE_LEN;
 
-	string line, empty_line;
-	empty_line.resize(line_len, '*');
+	string line;	
 
-	
 	user_file.open(fstream::in);
-
-
-	while(getline(user_file.fs, line)){
-		if(line == empty_line){
-			continue;
-		}
-
+	while(user_file.read(line)){
 		stringstream ss(line);
 		int l_id;
 		string l_email, l_hashed_password, l_first_name, l_last_name;
@@ -567,35 +535,17 @@ json getUsers(int user_id){
 	return response;
 }
 
+//////////////////////////////////
+// Files Accessed: follows(read/write)
 json userFollowUser(int follower, int followee){
-	//////////////////////////////////
-	// This function could have simply inserted new data
-	// into the file. The current implementation reads the 
-	// entire file on every call. This is not ideal, but 
-	// it's the only way I can think of that verifies the 
-	// integrity of user data and prevent duplicate data.
-	// It also allows me to fill in the blanks. Need some 
-	// feedback.
-	//////////////////////////////////
 	json response;
-	const uint line_len = FLW_LINE_LEN;
 
-	string line, empty_line;
-	empty_line.resize(line_len, '*');
+	string line;
 
-	int e_pos = -1, l_follower, l_followee;
+	int l_follower, l_followee;
 
 	flw_file.open(fstream::in | fstream::out);
-
-	while(getline(flw_file.fs, line)){
-		if(line == empty_line){
-			if(e_pos == -1){
-				e_pos = flw_file.fs.tellg();
-				e_pos -= line_len + 1;
-			}
-			continue;
-		}
-
+	while(flw_file.read(line)){
 		stringstream ss(line);
 		ss >> l_follower >> l_followee;
 		if(follower == l_follower && followee == l_followee){
@@ -605,40 +555,27 @@ json userFollowUser(int follower, int followee){
 	}
 	flw_file.fs.clear();
 
-	if(e_pos == -1)
-		flw_file.fs.seekp(0, fstream::end);
-	else
-		flw_file.fs.seekp(e_pos);
-
-	flw_file.fs  << format_int(follower, ID_LEN) << "\t" 
-		<< format_int(followee, ID_LEN) << endl;
+	flw_file.insert(format_int(follower, ID_LEN) + "\t" 
+					+ format_int(followee, ID_LEN));
 	flw_file.close();
 
 	sFlash(response, "Follow user successful!");
 	return response;
 }
 
+//////////////////////////////////
+// Files Accessed: follows(read/write)
 json userUnfollowUser(int follower, int followee){
 	json response;
-	const uint line_len = FLW_LINE_LEN;
-
-	string line, empty_line;
-	empty_line.resize(line_len, '*');
-
-	uint e_pos = -1;
+	string line;
 	int l_follower, l_followee;
 
 	flw_file.open(fstream::in | fstream::out);
-
-	while(getline(flw_file.fs, line)){
+	while(flw_file.read(line)){
 		stringstream ss(line);
 		ss >> l_follower >> l_followee;
 		if(follower == l_follower && followee == l_followee){
-			e_pos = flw_file.fs.tellg();
-			e_pos -= line_len + 1;
-			flw_file.fs.clear();
-			flw_file.fs.seekp(e_pos);
-			flw_file.fs << empty_line;
+			flw_file.remove();
 			flw_file.close();
 			sFlash(response, "Unfollow user successful!");
 			return response;
@@ -650,6 +587,8 @@ json userUnfollowUser(int follower, int followee){
 	return response;
 }
 
+//////////////////////////////////
+// Files Accessed: users(read), follows(read)
 json getFollowees(int user_id){
 	json response;
 	json followees;
@@ -658,7 +597,7 @@ json getFollowees(int user_id){
 	int l_follower, l_followee;
 
 	flw_file.open(fstream::in);
-	while(getline(flw_file.fs, line)){
+	while(flw_file.read(line)){
 		stringstream ss(line);
 		ss >> l_follower >> l_followee;
 		if(user_id == l_follower){
@@ -682,6 +621,8 @@ json getFollowees(int user_id){
 	return response;
 }
 
+//////////////////////////////////
+// Files Accessed: users(read), follows(read)
 json getFollowers(int user_id){
 	json response;
 	json followers;
@@ -690,7 +631,7 @@ json getFollowers(int user_id){
 	int l_follower, l_followee;
 
 	flw_file.open(fstream::in);
-	while(getline(flw_file.fs, line)){
+	while(flw_file.read(line)){
 		stringstream ss(line);
 		ss >> l_follower >> l_followee;
 		if(user_id == l_followee){
@@ -709,7 +650,6 @@ json getFollowers(int user_id){
 		}
 	}
 	flw_file.close();
-
 	response["followers"] = followers;
 	return response;
 }

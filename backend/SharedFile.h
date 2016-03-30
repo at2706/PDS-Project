@@ -4,7 +4,6 @@
 #include <string>
 #include <list>
 #include <mutex>
-#include <condition_variable>
 
 #include <string.h>
 #include <unistd.h>
@@ -26,19 +25,12 @@ public:
 	void close();
 
 	bool read(string &line);
-
-	//////////////////////////////////
-	// Offset parameter used for the special
-	// case in user_file where the next ID is
-	// at the end of the file.
-	// Returns true if inserted into blank.
-	//////////////////////////////////
 	bool insert(const string data, int offset = 0);
+
 	bool remove();
 
 private:
 	mutex mx;
-	condition_variable cv;
 	string path;
 
 	uint line_len;

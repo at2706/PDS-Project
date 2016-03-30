@@ -1,5 +1,9 @@
 #include "SharedFile.h"
 
+//////////////////////////////////
+// Constructor. Adds existing blank 
+// lines to list.
+//////////////////////////////////
 SharedFile::SharedFile(const string path, uint n) : path(path), line_len(n) {
 	string line;
 	empty_line.resize(line_len, '*');
@@ -38,6 +42,10 @@ void SharedFile::close(){
 	mx.unlock();
 }
 
+//////////////////////////////////
+// Read line by line and skips over
+// blank lines.
+//////////////////////////////////
 bool SharedFile::read(string &line){
 	while(getline(fs, line)){
 		if(line == empty_line)
@@ -47,10 +55,25 @@ bool SharedFile::read(string &line){
 	return false;
 }
 
+//////////////////////////////////
+// Offset parameter used for the special
+// case in user_file where the next ID is
+// at the end of the file.
+// Returns true if inserted into blank.
+// False if at end of file.
+//////////////////////////////////
 bool SharedFile::insert(const string data, int offset){
-	if(data.length() != line_len)
+	//Sanity check: is the seek position at the start of a line?
+	if(fs.tellp() % (line_len + 1) != 0){
+		close();
+		throw "Error: remove failed. Seek position invalid.";
+	}
+
+	if(data.length() != line_len){
+		close();
 		throw "Error: insert data length incorrect. Data: " 
 		+ to_string(data.length()) + ", Line Length: " + to_string(line_len);
+	}
 	streampos pos;
 	if(!empty_pos.empty()){
 		pos = empty_pos.front();
@@ -66,7 +89,17 @@ bool SharedFile::insert(const string data, int offset){
 	}
 }
 
+//////////////////////////////////
+// Should be called inside a read loop. 
+// The seek position is moved to the 
+// previous line and overwrites data.
+//////////////////////////////////
 bool SharedFile::remove(){
+	//Sanity check: is the seek position at the start of a line?
+	if(fs.tellp() % (line_len + 1) != 0){
+		close();
+		throw "Error: remove failed. Seek position invalid.";
+	}
 	streampos pos;
 	pos = fs.tellg();
 	pos -= line_len + 1;

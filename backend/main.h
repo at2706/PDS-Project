@@ -38,7 +38,7 @@ using json = nlohmann::json;
 
 // Line lengths in each file: including tabs, excluding the last \n
 #define USER_LINE_LEN ID_LEN + EMAIL_CHAR_LIMIT + HASH_LEN + NAME_CHAR_LIMIT + 3
-#define MSG_LINE_LEN TIME_LEN + ID_LEN + NAME_CHAR_LIMIT + MSG_LEN + 4
+#define MSG_LINE_LEN ID_LEN + TIME_LEN + NAME_CHAR_LIMIT + MSG_LEN + 4
 #define FLW_LINE_LEN ID_LEN + ID_LEN + 1
 
 //////////////////////////////////
@@ -67,10 +67,6 @@ json userFollowUser(int follower, int followee);
 json userUnfollowUser(int follower, int followee);
 json getFollowees(int user_id);
 json getFollowers(int user_id);
-
-string format_string(string &str, uint width);
-string format_int(uint i, uint width);
-string format_timestamp(time_t now, uint t);
 
 //////////////////////////////////
 // Various functions to display messages
@@ -136,8 +132,8 @@ inline string format_int(uint i, uint width){
 // Formats time to display on the web page.
 // Data out
 //////////////////////////////////
-inline string format_timestamp(time_t now, uint t){
-	double diff = difftime(now, (time_t)t);
+inline string format_timestamp(time_t now, time_t t){
+	double diff = difftime(now, t);
 
 	string str;
 
