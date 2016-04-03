@@ -29,6 +29,11 @@ Part 2
     User Delete: now requires password.
     Timestamps in messages
 
+Part 3
+  - Locks are obtained on on SharedFile::open(), and unlocked on SharedFile::close()
+  - If multiple locks are needed, they are taken in this order: flw_file, user_file, msg_file; this ensures that we don't have a deadlock situation
+
+
 Written by:
   - Minhtri Tran
   - Andy Tang

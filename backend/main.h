@@ -22,19 +22,24 @@ using json = nlohmann::json;
 #define BUFFER_SIZE 4096
 #define DEFAULT_PORT 13000
 
-// User data size: 256 bytes
+// User data size: 256 bytes (including newline char)
 // Max Users: 9999 (2.56MB)
 // Character limits also enforced in javascript
 #define ID_LEN 4
 #define EMAIL_CHAR_LIMIT 60
 #define NAME_CHAR_LIMIT 60
 
-// Message size: 178 bytes
+// Message size: 178 bytes (including newline char)
 #define MSG_LEN 100
 
 // Misc
 #define HASH_LEN 128
 #define TIME_LEN 10
+
+// File names
+#define USER_FILE "db/users"
+#define MSG_FILE "db/messages"
+#define FLW_FILE "db/follows"
 
 // Line lengths in each file: including tabs, excluding the last \n
 #define USER_LINE_LEN ID_LEN + EMAIL_CHAR_LIMIT + HASH_LEN + NAME_CHAR_LIMIT + 3

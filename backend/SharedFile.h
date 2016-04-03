@@ -4,17 +4,11 @@
 #include <string>
 #include <list>
 #include <mutex>
-
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
 
 using namespace std;
-
-#define USER_FILE "db/users"
-#define MSG_FILE "db/messages"
-#define FLW_FILE "db/follows"
-
 
 class SharedFile{
 public:

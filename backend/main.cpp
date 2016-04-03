@@ -228,7 +228,6 @@ json deleteUser(int user_id, string hashed_password){
 		if(user_id == l_id){
 			if(hashed_password.compare(l_hashed_password) == 0){
 				removed = user_file.remove();
-				user_file.close();
 				break;
 			}
 			else{
@@ -546,6 +545,7 @@ json userFollowUser(int follower, int followee){
 		stringstream ss(line);
 		ss >> l_follower >> l_followee;
 		if(follower == l_follower && followee == l_followee){
+			flw_file.close();
 			wFlash(response, "You're alreadying following that user.");
 			return response;
 		}
