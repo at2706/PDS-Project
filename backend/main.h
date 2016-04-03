@@ -38,7 +38,7 @@ using json = nlohmann::json;
 
 // Line lengths in each file: including tabs, excluding the last \n
 #define USER_LINE_LEN ID_LEN + EMAIL_CHAR_LIMIT + HASH_LEN + NAME_CHAR_LIMIT + 3
-#define MSG_LINE_LEN ID_LEN + TIME_LEN + NAME_CHAR_LIMIT + MSG_LEN + 4
+#define MSG_LINE_LEN ID_LEN + TIME_LEN + NAME_CHAR_LIMIT + MSG_LEN + 3
 #define FLW_LINE_LEN ID_LEN + ID_LEN + 1
 
 //////////////////////////////////

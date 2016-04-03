@@ -63,12 +63,6 @@ bool SharedFile::read(string &line){
 // False if at end of file.
 //////////////////////////////////
 bool SharedFile::insert(const string data, int offset){
-	//Sanity check: is the seek position at the start of a line?
-	if(fs.tellp() % (line_len + 1) != 0){
-		close();
-		throw "Error: remove failed. Seek position invalid.";
-	}
-
 	if(data.length() != line_len){
 		close();
 		throw "Error: insert data length incorrect. Data: " 
@@ -78,15 +72,16 @@ bool SharedFile::insert(const string data, int offset){
 	if(!empty_pos.empty()){
 		pos = empty_pos.front();
 		empty_pos.pop_front();
-
 		fs.seekp(pos);
 		fs << data << endl;
 		return true;
 	}
 	else{
 		fs.seekp(offset, fstream::end);
+		fs << data << endl;
 		return false;
 	}
+	
 }
 
 //////////////////////////////////

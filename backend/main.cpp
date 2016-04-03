@@ -101,6 +101,9 @@ json processRequest(json request) {
 		else if(request["type"] == "authUser"){
 			response = authUser(request["data"]["email"], request["data"]["hashed_password"]);
 		}
+		else if(request["type"] == "getUser"){
+			response = getUser(request["data"]["user_id"]);
+		}
 		else if(request["type"] == "getProfile"){
 			response = getProfile(request["data"]["user_id"], request["data"]["profile"]);
 		}
@@ -164,7 +167,7 @@ json processRequest(json request) {
 // Exceptions: format_string/int
 json createUser(string email, string first_name, string last_name, string hashed_password) {
 	json response;
-	string line
+	string line;
 	int id = 0, l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
@@ -210,7 +213,6 @@ json createUser(string email, string first_name, string last_name, string hashed
 // Files Accessed: users(read/write)
 json deleteUser(int user_id, string hashed_password){
 	json response;
-	uint line_len = USER_LINE_LEN;
 
 	string line;
 
@@ -277,11 +279,6 @@ json editUser(int user_id, string email, string first_name, string last_name, st
 			response["last_name"] = l_last_name;
 			response["email"] = l_email;
 
-		}
-		else if(email.compare(l_email) == 0){
-			user_file.close();
-			wFlash(response, "That email is taken.");
-			return response;
 		}
 	}
 	user_file.fs.clear();

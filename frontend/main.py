@@ -135,7 +135,7 @@ def edit(user_id):
 
     return render_template(
         'user_edit.html',
-        form=request.form)
+        form=get_user(user_id))
 
 
 @app.route('/user/<int:user_id>/follow')
@@ -255,8 +255,9 @@ def edit_user(email, first_name, last_name, password, pwd1, pwd2):
 
     response = sendRequest(request)
 
-    session['username'] = response['first_name'] + " " + response['last_name']
-    session['email'] = response['email']
+    if response['success']:
+        session['username'] = response['first_name'] + " " + response['last_name']
+        session['email'] = response['email']
 
     return response['success']
 
@@ -296,19 +297,18 @@ def login_user(email, password):
     return response['success']
 
 
-# No longer needed
-# def get_user(user_id):
-#     debug("get_user Fuction")
-#     request = {
-#         'type': 'getUser',
-#         'data': {
-#             'user_id': user_id
-#         }
-#     }
+def get_user(user_id):
+    debug("get_user Fuction")
+    request = {
+        'type': 'getUser',
+        'data': {
+            'user_id': user_id
+        }
+    }
 
-#     response = sendRequest(request)
+    response = sendRequest(request)
 
-#     return response
+    return response
 
 
 def get_profile(user_id):
