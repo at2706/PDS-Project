@@ -21,14 +21,17 @@ public:
 
 	bool read(string &line);
 	bool insert(const string data, int offset = 0);
-
+	bool edit(string data);
 	bool remove();
 
 private:
-	string path;
-
-	uint line_len;
+	const string path;
+	const uint line_len;
 	string empty_line;
 	// Seek positions of empty lines
 	list<streampos> empty_pos;
+
+	void validate(bool cond, string msg);
+	bool validWrite();
+	bool validData(string data);
 };

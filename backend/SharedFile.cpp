@@ -60,11 +60,7 @@ bool SharedFile::read(string &line){
 // False if at end of file.
 //////////////////////////////////
 bool SharedFile::insert(const string data, int offset){
-	if(data.length() != line_len){
-		close();
-		throw "Error: insert data length incorrect. Data: " 
-		+ to_string(data.length()) + ", Line Length: " + to_string(line_len);
-	}
+	validate(validData(data), "insert");
 	streampos pos;
 	if(!empty_pos.empty()){
 		pos = empty_pos.front();
@@ -82,22 +78,48 @@ bool SharedFile::insert(const string data, int offset){
 }
 
 //////////////////////////////////
+// Make changes to existing data
+//////////////////////////////////
+bool SharedFile::edit(string data){
+	validate(validWrite() && validData(data), "edit");
+	streampos pos = fs.tellg();
+	pos -= line_len + 1;
+	fs.clear();
+	fs.seekp(pos);
+	fs << data;
+	return true;
+}
+
+//////////////////////////////////
 // Should be called inside a read loop. 
 // The seek position is moved to the 
 // previous line and overwrites data.
 //////////////////////////////////
 bool SharedFile::remove(){
-	//Sanity check: is the seek position at the start of a line?
-	if(fs.tellp() % (line_len + 1) != 0){
-		close();
-		throw "Error: remove failed. Seek position invalid.";
-	}
-	streampos pos;
-	pos = fs.tellg();
+	validate(validWrite(), "remove");
+	streampos pos = fs.tellg();
 	pos -= line_len + 1;
 	fs.clear();
 	fs.seekp(pos);
 	fs << empty_line;
 	empty_pos.push_back(pos);
 	return true;
+}
+
+// Validation checks before execution
+void SharedFile::validate(bool cond, string msg){
+	if(!cond){
+		fs.close();
+		throw "Error in file: " + path + " " + msg;
+	}
+}
+
+// Write should be at start of line
+bool SharedFile::validWrite(){
+	return fs.tellp() % (line_len + 1) == 0;
+}
+
+// Data should have the same lengths
+bool SharedFile::validData(string data){
+	return data.length() == line_len;
 }

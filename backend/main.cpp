@@ -171,6 +171,13 @@ json processRequest(json request) {
 		err_msg += e;
 		dFlash(response, err_msg);
 	}
+	catch(string &s){
+		response.clear();
+		response["success"] = false;
+		string err_msg = "An exception has been thrown: ";
+		err_msg += s;
+		dFlash(response, err_msg);
+	}
 	catch(exception &e){
 		response.clear();
 		response["success"] = false;
@@ -273,11 +280,9 @@ json deleteUser(int user_id, string hashed_password){
 // Files Accessed: users(read/write)
 json editUser(int user_id, string email, string first_name, string last_name, string hashed_password, string new_password){
 	json response;
-	const uint line_len = USER_LINE_LEN;
-
 	string line;
 
-	int e_pos = -1, l_id;
+	int l_id;
 	string l_email, l_hashed_password, l_first_name, l_last_name;
 
 	user_file.open(fstream::in | fstream::out);
@@ -290,28 +295,20 @@ json editUser(int user_id, string email, string first_name, string last_name, st
 				dFlash(response, "Invaid Password.");
 				return response;
 			}
-
-			e_pos = user_file.fs.tellg();
-			e_pos -= line_len + 1;
-
 			response["first_name"] = l_first_name;
 			response["last_name"] = l_last_name;
 			response["email"] = l_email;
-
+			break;
 		}
 	}
-	user_file.fs.clear();
 
-	if(!email.empty()){
-		user_file.fs.seekp(e_pos + ID_LEN + 1);
-		user_file.fs << format_string(email, EMAIL_CHAR_LIMIT);
-		response["email"] = email;
-	}
+	string new_data = format_int(user_id, ID_LEN) + '\t';
 
-	if(!new_password.empty()){
-		user_file.fs.seekp(e_pos + ID_LEN + EMAIL_CHAR_LIMIT + 2);
-		user_file.fs << new_password;
-	}
+	string new_email = (email.empty()) ? l_email : email;
+	new_data += format_string(new_email, EMAIL_CHAR_LIMIT) + '\t';
+
+	new_password = (new_password.empty()) ? l_hashed_password : new_password;
+	new_data += new_password + '\t';
 
 	if(!first_name.empty() || !last_name.empty()){
 		string current_first_name = response["first_name"];
@@ -324,10 +321,10 @@ json editUser(int user_id, string email, string first_name, string last_name, st
 		response["last_name"] = new_last_name;
 
 		string new_full_name = new_first_name + " " + new_last_name;
-		user_file.fs.seekp(e_pos + ID_LEN + EMAIL_CHAR_LIMIT + 128 + 3);
-		user_file.fs << format_string(new_full_name, NAME_CHAR_LIMIT);
+		new_data += format_string(new_full_name, NAME_CHAR_LIMIT);
 	}
-
+	cout << "Length: " << new_data.length() << endl;
+	user_file.edit(new_data);
 	user_file.close();
 	sFlash(response, "Successfully updated user information.");
 	return response;
