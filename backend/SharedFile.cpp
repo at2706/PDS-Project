@@ -22,17 +22,14 @@ SharedFile::SharedFile(const string path, uint n) : path(path), line_len(n) {
 }
 
 void SharedFile::open(ios_base::openmode mode){
-	mx.lock();
 	if (fs.is_open()) {
 		cerr << "Warning: Attempted to reopen file: \"" + path + "\"";
-		mx.unlock();
 		return;
 	}
 	
 	fs.open(path, mode);
 
 	if (!fs.is_open()) {
-		mx.unlock();
 		throw "Error: failed to open file: \"" + path + "\"";
 	}
 }
@@ -40,7 +37,6 @@ void SharedFile::open(ios_base::openmode mode){
 void SharedFile::close(){
 	fs.close();
 	fs.clear();
-	mx.unlock();
 }
 
 //////////////////////////////////

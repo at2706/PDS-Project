@@ -13,6 +13,7 @@ using namespace std;
 class SharedFile{
 public:
 	fstream fs;
+	mutex mx;
 
 	SharedFile(const string path, uint n);
 	void open(ios_base::openmode mode);
@@ -24,7 +25,6 @@ public:
 	bool remove();
 
 private:
-	mutex mx;
 	string path;
 
 	uint line_len;

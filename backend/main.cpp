@@ -84,13 +84,16 @@ json processRequest(json request) {
 	try{
 
 		if(request["type"] == "createUser"){
+			lock_guard<mutex> lock(user_file.mx);
 			response = createUser(request["data"]["email"], request["data"]["first_name"],
 				request["data"]["last_name"], request["data"]["hashed_password"]);
 		}
 		else if(request["type"] == "deleteUser"){
+			lock_guard<mutex> lock(user_file.mx);
 			response = deleteUser(request["data"]["user_id"], request["data"]["hashed_password"]);
 		}
 		else if(request["type"] == "editUser"){
+			lock_guard<mutex> user_lock(user_file.mx);
 			response = editUser(request["data"]["user_id"],
 								request["data"]["email"],
 								request["data"]["first_name"],
@@ -99,38 +102,55 @@ json processRequest(json request) {
 								request["data"]["new_password"]);
 		}
 		else if(request["type"] == "authUser"){
+			lock_guard<mutex> user_lock(user_file.mx);
 			response = authUser(request["data"]["email"], request["data"]["hashed_password"]);
 		}
 		else if(request["type"] == "getUser"){
+			lock_guard<mutex> user_lock(user_file.mx);
 			response = getUser(request["data"]["user_id"]);
 		}
 		else if(request["type"] == "getProfile"){
+			lock_guard<mutex> flw_lock(flw_file.mx);
+			lock_guard<mutex> user_lock(user_file.mx);
 			response = getProfile(request["data"]["user_id"], request["data"]["profile"]);
 		}
 		else if(request["type"] == "postMessage"){
+			lock_guard<mutex> msg_lock(msg_file.mx);
 			int user_id = request["data"]["user_id"];
 			response = postMessage(user_id, request["data"]["username"], request["data"]["message"]);
 		}
 		else if(request["type"] == "getMessagesBy"){
+			lock_guard<mutex> msg_lock(msg_file.mx);
 			response = getMessagesBy(request["data"]["user_id"]);
 		}
 		else if(request["type"] == "getMessagesFeed"){
+			lock_guard<mutex> flw_lock(flw_file.mx);
+			lock_guard<mutex> user_lock(user_file.mx);
+			lock_guard<mutex> msg_lock(msg_file.mx);
 			response = getMessagesFeed(request["data"]["user_id"]);
 		}
 		else if(request["type"] == "getUsers"){
+			lock_guard<mutex> flw_lock(flw_file.mx);
+			lock_guard<mutex> user_lock(user_file.mx);
 			int user_id = request["data"]["user_id"];
 			response = getUsers(user_id);
 		}
 		else if(request["type"] == "userFollowUser"){
+			lock_guard<mutex> flw_lock(flw_file.mx);
 			response = userFollowUser(request["data"]["follower"], request["data"]["followee"]);
 		}
 		else if(request["type"] == "userUnfollowUser"){
+			lock_guard<mutex> flw_lock(flw_file.mx);
 			response = userUnfollowUser(request["data"]["follower"], request["data"]["followee"]);
 		}
 		else if(request["type"] == "getFollowees"){
+			lock_guard<mutex> flw_lock(flw_file.mx);
+			lock_guard<mutex> user_lock(user_file.mx);
 			response = getFollowees(request["data"]["user_id"]);
 		}
 		else if(request["type"] == "getFollowers"){
+			lock_guard<mutex> flw_lock(flw_file.mx);
+			lock_guard<mutex> user_lock(user_file.mx);
 			response = getFollowers(request["data"]["user_id"]);
 		}
 
