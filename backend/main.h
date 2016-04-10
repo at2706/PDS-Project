@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
+#include <stdexcept>
 #include <thread>
 #include "json.hpp"
 #include "SharedFile.h"
@@ -115,7 +116,7 @@ inline void abort(int errcode){
 //////////////////////////////////
 inline string format_string(string &str, uint width){
 	if(str.length() > width)
-		throw "Error: Format string too long.";
+		throw overflow_error("Error: Format string too long.");
 
 	str.resize(width, ' ');
 	return str;
@@ -123,7 +124,7 @@ inline string format_string(string &str, uint width){
 
 inline string format_int(uint i, uint width){
 	if(i > pow(10, width) - 1)
-		throw "Error: Format int too big.";
+		throw overflow_error("Error: Format int too big.");
 	stringstream ss;
 	ss.width(width);
 	ss.fill('0');

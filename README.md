@@ -36,8 +36,3 @@ Part 3
 Written by:
   - Minhtri Tran
   - Andy Tang
-
-TODO: EditUser function.
-TODO: Finish SharedFile class so fstream fs can be private member.
-TODO: SharedFile remove(): insert new blank position in ascending order. 
-TODO: Finish commenting every function.

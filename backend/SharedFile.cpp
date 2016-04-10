@@ -27,16 +27,16 @@ void SharedFile::open(ios_base::openmode mode){
 		return;
 	}
 	
+	fs.clear();
 	fs.open(path, mode);
 
 	if (!fs.is_open()) {
-		throw "Error: failed to open file: \"" + path + "\"";
+		throw runtime_error("Error: failed to open file: \"" + path + "\"");
 	}
 }
 
 void SharedFile::close(){
 	fs.close();
-	fs.clear();
 }
 
 //////////////////////////////////
@@ -51,7 +51,16 @@ bool SharedFile::read(string &line){
 	}
 	return false;
 }
-
+//////////////////////////////////
+// Barebone write function specific for
+// creating user. It's the only abnormal
+// file, having next id appended at EOF.
+//////////////////////////////////
+void SharedFile::write(string data, streamoff offset, fstream::seekdir way){
+	fs.clear();
+	fs.seekp(offset, way);
+	fs << data;
+}
 //////////////////////////////////
 // Offset parameter used for the special
 // case in user_file where the next ID is
@@ -59,8 +68,9 @@ bool SharedFile::read(string &line){
 // Returns true if inserted into blank.
 // False if at end of file.
 //////////////////////////////////
-bool SharedFile::insert(const string data, int offset){
-	validate(validData(data), "insert");
+bool SharedFile::insert(const string data, streamoff offset){
+	throw_assert(validData(data));
+	fs.clear();
 	streampos pos;
 	if(!empty_pos.empty()){
 		pos = empty_pos.front();
@@ -74,14 +84,13 @@ bool SharedFile::insert(const string data, int offset){
 		fs << data << endl;
 		return false;
 	}
-	
 }
 
 //////////////////////////////////
 // Make changes to existing data
 //////////////////////////////////
 bool SharedFile::edit(string data){
-	validate(validWrite() && validData(data), "edit");
+	throw_assert(validWrite() && validData(data));
 	streampos pos = fs.tellg();
 	pos -= line_len + 1;
 	fs.clear();
@@ -90,13 +99,12 @@ bool SharedFile::edit(string data){
 	return true;
 }
 
-//////////////////////////////////
-// Should be called inside a read loop. 
+////////////////////////////////// 
 // The seek position is moved to the 
 // previous line and overwrites data.
 //////////////////////////////////
 bool SharedFile::remove(){
-	validate(validWrite(), "remove");
+	throw_assert(validWrite());
 	streampos pos = fs.tellg();
 	pos -= line_len + 1;
 	fs.clear();
@@ -104,22 +112,4 @@ bool SharedFile::remove(){
 	fs << empty_line;
 	empty_pos.push_back(pos);
 	return true;
-}
-
-// Validation checks before execution
-void SharedFile::validate(bool cond, string msg){
-	if(!cond){
-		fs.close();
-		throw "Error in file: " + path + " " + msg;
-	}
-}
-
-// Write should be at start of line
-bool SharedFile::validWrite(){
-	return fs.tellp() % (line_len + 1) == 0;
-}
-
-// Data should have the same lengths
-bool SharedFile::validData(string data){
-	return data.length() == line_len;
 }

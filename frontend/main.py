@@ -256,7 +256,7 @@ def edit_user(email, first_name, last_name, password, pwd1, pwd2):
     response = sendRequest(request)
 
     if response['success']:
-        session['username'] = response['first_name'] + " " + response['last_name']
+        session['username'] = response['first_name'] + response['last_name']
         session['email'] = response['email']
 
     return response['success']
@@ -291,7 +291,7 @@ def login_user(email, password):
 
     if response['success']:
         session['id'] = response['user_id']
-        session['username'] = response['first_name'] + " " + response['last_name']
+        session['username'] = response['first_name'] + response['last_name']
         session['email'] = response['email']
 
     return response['success']
