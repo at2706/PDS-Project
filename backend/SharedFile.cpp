@@ -134,7 +134,8 @@ void SharedFile::remove(vector<streampos>& v){
 ////////////////////////////////// 
 // Accepts a lambda function that determines
 // what type of entries to find. Returns 
-// the position of all found entries.
+// the position of all found entries. The 
+// limit parameter is for controlling return size.
 //////////////////////////////////
 vector<streampos> SharedFile::find(function<bool(string)> &cond, int limit){
 	string line;

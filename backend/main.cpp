@@ -275,29 +275,35 @@ json deleteUser(int user_id, string hashed_password){
 	streampos pos;
 	std::vector<streampos> v;
 
+	// Opens follows file
 	flw_file.open(fstream::in | fstream::out);
-
+	// Lambda function that finds all entries that relate to user_id
 	function<bool(string)> cond = [user_id](string line)->bool{
 		stringstream ss(line);
 		int l_follower, l_followee;
 		ss >> l_follower >> l_followee;
 		return user_id == l_follower;
 	};
+	// Get entry positions and remove
 	v = flw_file.find(cond);
 	flw_file.remove(v);
 
 	flw_file.close();
 
+	// Cleanup old variables just in case
 	line.clear();
 	v.clear();
 
+	// Open messages file
 	msg_file.open(fstream::in | fstream::out);
+	// Lambda function that finds user_id messages
 	cond = [user_id](string line)->bool{
 		stringstream ss(line);
 		int id, timestamp;
 		ss >> id >> timestamp;
 		return user_id == id;
 	};
+	// Get message positions and remove
 	v = msg_file.find(cond);
 	msg_file.remove(v);
 
@@ -321,7 +327,9 @@ json editUser(int user_id, string email, string first_name, string last_name, st
 		stringstream ss(line);
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name;
 		getline(ss, l_last_name);
+		// Find user
 		if(user_id == l_id){
+			// Check if password is incorrect
 			if(hashed_password.compare(l_hashed_password) != 0){
 				user_file.close();
 				dFlash(response, "Invaid Password.");
@@ -346,9 +354,11 @@ json editUser(int user_id, string email, string first_name, string last_name, st
 
 	new_data += format_string(new_full_name, NAME_CHAR_LIMIT);
 
+	// Finish building, and insert back into user file
 	user_file.edit(new_data);
 	user_file.close();
 
+	// Update current session data
 	response["first_name"] = new_first_name;
 	response["last_name"] = new_last_name;
 	response["email"] = new_email;
@@ -369,7 +379,9 @@ json authUser(string email, string hashed_password) {
 		string l_email, l_hashed_password, l_first_name, l_last_name;
 		ss >> l_id >> l_email >> l_hashed_password >> l_first_name;
 		getline(ss, l_last_name);
+		// Check email and password
 		if(email.compare(l_email) == 0 && hashed_password.compare(l_hashed_password) == 0){
+			// Send session data
 			response["user_id"] = l_id;
 			response["email"] = l_email;
 			response["first_name"] = l_first_name;
@@ -412,6 +424,7 @@ json getUser(int user_id){
 	}
 
 	user_file.close();
+	// Returns the error page
 	abort(400);
 	return user;
 }
@@ -420,6 +433,8 @@ json getUser(int user_id){
 // Files Accessed: users(read/write), follows(read/write)
 // Exceptions: abort(400) Bad Request!
 json getProfile(int user_id, int profile){
+	// Checks whether or not the current user is following 
+	//the current profile. Needed for displaying the right button.
 	bool following = false;
 	json followees = getFollowees(user_id)["followees"];
 	for(json followee : followees){
@@ -439,6 +454,7 @@ json getProfile(int user_id, int profile){
 json postMessage(int user_id, string username, string message) {
 	json response;
 
+	// Message length restraints
 	int length = message.length();
 	if(!length){
 		wFlash(response, "Your message is empty.");
@@ -450,6 +466,7 @@ json postMessage(int user_id, string username, string message) {
 	}
 
 	time_t current_time = time(NULL);
+	// Removes \n characters so it won't mess with the file structure
 	replace(message.begin(), message.end(), '\n', ' ');
 
 	msg_file.open(fstream::in | fstream::out);
@@ -466,22 +483,23 @@ json postMessage(int user_id, string username, string message) {
 // Files Accessed: messages(read)
 json getMessagesBy(int user_id){
 	json response;
-	json messages;
+	json messages;	// Vector of found messages
 
 	string line;
 	time_t timestamp, 
 	current_time = time(NULL);
 	int l_id;
-	string l_first_name, l_last_name, l_message;
 
 	msg_file.open(fstream::in);
 	while(msg_file.read(line)){
 		stringstream ss(line);
+		string l_first_name, l_last_name, l_message;
 		ss  >> l_id >> timestamp >> l_first_name;
 		getline(ss, l_last_name, '\t');
 		getline(ss, l_message);
 
 		if(user_id == l_id){
+			// Build message based on found line
 			json message;
 			message["user_id"] = l_id;
 			message["t"] = timestamp; // Unformated time for sorting
@@ -492,7 +510,6 @@ json getMessagesBy(int user_id){
 			messages.push_back(message);
 		}
 	}
-
 	msg_file.close();
 
 	// Sort messages based on timestamp
@@ -529,6 +546,7 @@ json getMessagesFeed(int user_id){
 			if(l_id == followee["user_id"]){
 				json message;
 				message["user_id"] = l_id;
+				message["t"] = timestamp; // Unformated time for sorting
 				message["time"] = format_timestamp(current_time, timestamp);
 				message["first_name"] = l_first_name;
 				message["last_name"] = l_last_name;
@@ -539,7 +557,11 @@ json getMessagesFeed(int user_id){
 	}
 	msg_file.close();
 
-	reverse(messages.begin(), messages.end());
+	// Sort messages based on timestamp
+	sort(messages.begin(), messages.end(), 
+		[](const json m1, const json m2)->bool{
+			return m1["t"] > m2["t"];
+		});
 	response["messages"] = messages;
 
 	return response;
@@ -590,6 +612,7 @@ json userFollowUser(int follower, int followee){
 	json response;
 	string line;
 
+	// Check if the user has been followed already.
 	flw_file.open(fstream::in | fstream::out);
 	while(flw_file.read(line)){
 		stringstream ss(line);
