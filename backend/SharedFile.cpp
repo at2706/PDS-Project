@@ -11,11 +11,14 @@ SharedFile::SharedFile(const string path, uint n) : path(path), line_len(n) {
 	streampos pos;
 
 	open(fstream::in);
+	cout << path << endl;
 	while(getline(fs, line)){
 		if(line == empty_line){
 			pos = fs.tellg();
 			pos -= line_len + 1;
 			empty_pos.push_back(pos);
+
+			cout << "   " << pos << endl;
 		}
 	}
 	close();
@@ -35,13 +38,16 @@ void SharedFile::open(ios_base::openmode mode){
 	}
 }
 
+//////////////////////////////////
+// Close file.
+//////////////////////////////////
 void SharedFile::close(){
 	fs.close();
 }
 
 //////////////////////////////////
-// Read line by line and skips over
-// blank lines.
+// Read line by line and skips over blank
+// lines.
 //////////////////////////////////
 bool SharedFile::read(string &line){
 	while(getline(fs, line)){
@@ -64,9 +70,8 @@ void SharedFile::write(string data, streamoff offset, fstream::seekdir way){
 //////////////////////////////////
 // Offset parameter used for the special
 // case in user_file where the next ID is
-// at the end of the file.
-// Returns true if inserted into blank.
-// False if at end of file.
+// at the EOF. Returns true if inserted 
+// into blank. False if at end of file.
 //////////////////////////////////
 bool SharedFile::insert(const string data, streamoff offset){
 	throw_assert(validData(data));
@@ -112,4 +117,33 @@ bool SharedFile::remove(){
 	fs << empty_line;
 	empty_pos.push_back(pos);
 	return true;
+}
+
+////////////////////////////////// 
+// Removes a series of entries based
+// on a vector of positions.
+//////////////////////////////////
+void SharedFile::remove(vector<streampos>& v){
+	fs.clear();
+	for(streampos pos : v){
+		fs.seekp(pos);
+		remove();
+	}
+}
+
+////////////////////////////////// 
+// Accepts a lambda function that determines
+// what type of entries to find. Returns 
+// the position of all found entries.
+//////////////////////////////////
+vector<streampos> SharedFile::find(function<bool(string)> &cond, int limit){
+	string line;
+	std::vector<streampos> v;
+	fs.clear();
+	while(read(line) && (int)v.size() != limit){
+		if(cond(line)){
+			v.push_back(fs.tellg());
+		}
+	}
+	return v;
 }

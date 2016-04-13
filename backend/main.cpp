@@ -199,6 +199,7 @@ json createUser(string email, string first_name, string last_name, string hashed
 	string line;
 	int l_id;
 
+	//Scan user_file for already existing email addresses.
 	user_file.open(fstream::in | fstream::out);
 	while(user_file.read(line)){
 		stringstream ss(line);
@@ -270,7 +271,39 @@ json deleteUser(int user_id, string hashed_password){
 		return response;
 	}
 
-	sFlash(response, "Successfully deleted User.");
+	line.clear();
+	streampos pos;
+	std::vector<streampos> v;
+
+	flw_file.open(fstream::in | fstream::out);
+
+	function<bool(string)> cond = [user_id](string line)->bool{
+		stringstream ss(line);
+		int l_follower, l_followee;
+		ss >> l_follower >> l_followee;
+		return user_id == l_follower;
+	};
+	v = flw_file.find(cond);
+	flw_file.remove(v);
+
+	flw_file.close();
+
+	line.clear();
+	v.clear();
+
+	msg_file.open(fstream::in | fstream::out);
+	cond = [user_id](string line)->bool{
+		stringstream ss(line);
+		int id, timestamp;
+		ss >> id >> timestamp;
+		return user_id == id;
+	};
+	v = msg_file.find(cond);
+	msg_file.remove(v);
+
+	msg_file.close();
+
+	sFlash(response, "Successfully deleted user.");
 	return response;
 }
 
@@ -419,7 +452,7 @@ json postMessage(int user_id, string username, string message) {
 	time_t current_time = time(NULL);
 	replace(message.begin(), message.end(), '\n', ' ');
 
-	msg_file.open(fstream::out | fstream::app);
+	msg_file.open(fstream::in | fstream::out);
 	msg_file.insert(format_int(user_id, ID_LEN) + "\t" 
 		+ format_int(current_time, TIME_LEN) + "\t" 
 		+ format_string(username, NAME_CHAR_LIMIT) + "\t"
@@ -451,6 +484,7 @@ json getMessagesBy(int user_id){
 		if(user_id == l_id){
 			json message;
 			message["user_id"] = l_id;
+			message["t"] = timestamp; // Unformated time for sorting
 			message["time"] = format_timestamp(current_time, timestamp);
 			message["first_name"] = l_first_name;
 			message["last_name"] = l_last_name;
@@ -461,7 +495,11 @@ json getMessagesBy(int user_id){
 
 	msg_file.close();
 
-	reverse(messages.begin(), messages.end());
+	// Sort messages based on timestamp
+	sort(messages.begin(), messages.end(), 
+		[](const json m1, const json m2)->bool{
+			return m1["t"] > m2["t"];
+		});
 	response["messages"] = messages;
 
 	return response;

@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
 #include <fstream>
+#include <functional>
+#include <vector>
 #include <string>
 #include <list>
 #include <mutex>
@@ -32,6 +34,9 @@ public:
 	bool insert(const string data, streamoff offset = 0);
 	bool edit(string data);
 	bool remove();
+
+	void remove(vector<streampos>& v);
+	vector<streampos> find(function<bool(string)> &cond, int limit = -1);
 
 private:
 	fstream fs;
