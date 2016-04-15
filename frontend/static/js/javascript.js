@@ -24,9 +24,17 @@ $(document).ready(function(){
         }
     });
 
-    $('#first_name').on('keyup focus', function() {
+    $('#first_name, #last_name').on('keyup focus', function() {
         var fn = $('#first_name').get(0);
         var ln = $('#last_name').get(0);
+
+        if(fn.value.indexOf(' ') >= 0 || ln.value.indexOf(' ') >= 0){
+            ln.setCustomValidity("Names with spaces are not allowed!");
+        }
+        else{
+            ln.setCustomValidity("");
+        }
+
         var length = fn.value.length + ln.value.length;
 
         //NAME_CHAR_LIMIT

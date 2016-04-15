@@ -211,7 +211,7 @@ json createUser(string email, string first_name, string last_name, string hashed
 			return response;
 		}
 	}
-	//After reading the file, l_id would contain the next id, located on the last line.
+	// After reading the file, l_id would contain the next id, located on the last line.
 
 	string name = first_name + " " + last_name;
 	bool filled = user_file.insert(format_int(l_id, ID_LEN) + "\t" 
@@ -243,14 +243,13 @@ json deleteUser(int user_id, string hashed_password){
 
 	bool removed = false;
 	int l_id;
-	string l_email, l_hashed_password, l_first_name, l_last_name;
+	string l_email, l_hashed_password;
 
 	user_file.open(fstream::in | fstream::out);
 
 	while(user_file.read(line)){
 		stringstream ss(line);
-		ss >> l_id >> l_email >> l_hashed_password >> l_first_name;
-		getline(ss, l_last_name);
+		ss >> l_id >> l_email >> l_hashed_password;
 		if(user_id == l_id){
 			if(hashed_password.compare(l_hashed_password) == 0){
 				removed = user_file.remove();
@@ -325,8 +324,7 @@ json editUser(int user_id, string email, string first_name, string last_name, st
 	user_file.open(fstream::in | fstream::out);
 	while(user_file.read(line)){
 		stringstream ss(line);
-		ss >> l_id >> l_email >> l_hashed_password >> l_first_name;
-		getline(ss, l_last_name);
+		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		// Find user
 		if(user_id == l_id){
 			// Check if password is incorrect
@@ -377,8 +375,7 @@ json authUser(string email, string hashed_password) {
 		stringstream ss(line);
 		int l_id;
 		string l_email, l_hashed_password, l_first_name, l_last_name;
-		ss >> l_id >> l_email >> l_hashed_password >> l_first_name;
-		getline(ss, l_last_name);
+		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		// Check email and password
 		if(email.compare(l_email) == 0 && hashed_password.compare(l_hashed_password) == 0){
 			// Send session data
@@ -409,8 +406,7 @@ json getUser(int user_id){
 		stringstream ss(line);
 		int l_id;
 		string l_email, l_hashed_password, l_first_name, l_last_name;
-		ss >> l_id >> l_email >> l_hashed_password >> l_first_name;
-		getline(ss, l_last_name);
+		ss >> l_id >> l_email >> l_hashed_password >> l_first_name >> l_last_name;
 		if(user_id == l_id && !l_email.empty()){
 			user["user_id"] = l_id;
 			user["email"] = l_email;
@@ -494,8 +490,7 @@ json getMessagesBy(int user_id){
 	while(msg_file.read(line)){
 		stringstream ss(line);
 		string l_first_name, l_last_name, l_message;
-		ss  >> l_id >> timestamp >> l_first_name;
-		getline(ss, l_last_name, '\t');
+		ss  >> l_id >> timestamp >> l_first_name >> l_last_name;
 		getline(ss, l_message);
 
 		if(user_id == l_id){
@@ -538,8 +533,7 @@ json getMessagesFeed(int user_id){
 	while(msg_file.read(line)){
 		stringstream ss(line);
 		string l_first_name, l_last_name, l_message;
-		ss >> l_id >> timestamp >> l_first_name;
-		getline(ss, l_last_name, '\t');
+		ss >> l_id >> timestamp >> l_first_name >> l_last_name;
 		getline(ss, l_message);
 
 		for(json followee : followees){

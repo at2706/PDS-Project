@@ -11,14 +11,11 @@ SharedFile::SharedFile(const string path, uint n) : path(path), line_len(n) {
 	streampos pos;
 
 	open(fstream::in);
-	cout << path << endl;
 	while(getline(fs, line)){
 		if(line == empty_line){
 			pos = fs.tellg();
 			pos -= line_len + 1;
 			empty_pos.push_back(pos);
-
-			cout << "   " << pos << endl;
 		}
 	}
 	close();
