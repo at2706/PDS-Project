@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <tuple>
 #include <algorithm>
 #include <stdexcept>
 #include <thread>
@@ -12,17 +13,25 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
+#include <sys/select.h>
 
 using namespace std;
 using json = nlohmann::json;
 
+#define DEFAULT_SERVER_IP "127.0.0.1"
+#define FIRST_RM_PORT 13000
+#define SECOND_RM_PORT 13001
+#define THIRD_RM_PORT 13002
+#define HEARTBEAT_INTERVAL 3
+#define HEARTBEAT_GRACE_PERIOD 5
+
 #define	LISTENQ 1024
 #define BUFFER_SIZE 4096
-#define DEFAULT_PORT 13000
 
 // User data size: 256 bytes (including newline char)
 // Max Users: 9999 (2.56MB)
@@ -38,11 +47,6 @@ using json = nlohmann::json;
 #define HASH_LEN 128
 #define TIME_LEN 10
 
-// File names
-#define USER_FILE "db/users"
-#define MSG_FILE "db/messages"
-#define FLW_FILE "db/follows"
-
 // Line lengths in each file: including tabs, excluding the last \n
 #define USER_LINE_LEN ID_LEN + EMAIL_CHAR_LIMIT + HASH_LEN + NAME_CHAR_LIMIT + 3
 #define MSG_LINE_LEN ID_LEN + TIME_LEN + NAME_CHAR_LIMIT + MSG_LEN + 3
@@ -51,13 +55,25 @@ using json = nlohmann::json;
 //////////////////////////////////
 // Global Shared File Variables
 //////////////////////////////////
-SharedFile user_file(USER_FILE, USER_LINE_LEN),
-			msg_file(MSG_FILE, MSG_LINE_LEN),
-			flw_file(FLW_FILE, FLW_LINE_LEN);
+SharedFile* user_file;
+SharedFile* msg_file;
+SharedFile* flw_file;
 
+const string USER_FILE = "db/users";
+const string MSG_FILE = "db/messages";
+const string FLW_FILE = "db/follows";
+
+vector<tuple<int, bool, bool>> replica_managers {make_tuple(FIRST_RM_PORT, true, false), 
+		make_tuple(SECOND_RM_PORT, true, false), make_tuple(THIRD_RM_PORT, true, false)};
+bool isPrimaryManager = false;
+
+void slaveHandler(int server_port);
+void slaveHeartBeat(int server_port);
+int connectToServer(string server_ip, int server_port);
+int getPortInput(int argc, char const *argv[]);
 int setUpServer(int server_port);
-void processConnection(int sock_fd);
-json processRequest(json request);
+void processConnection(int sock_fd, int server_port);
+json processRequest(json request, int server_port);
 
 json createUser(string email, string first_name, string last_name, string hashed_password);
 json deleteUser(int user_id, string hashed_password);

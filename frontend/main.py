@@ -2,12 +2,15 @@ import os
 import hashlib
 import socket
 import json
+import time
 from flask import Flask, render_template, request, redirect, flash, url_for, abort, session
 from jinja2 import TemplateNotFound
 from werkzeug import secure_filename
+import collections
 
+SWITCH_BACKEND_INTERVAL = 4
 BACKEND_IP = "localhost"
-BACKEND_PORT = 13000
+REPLICA_MANAGERS = collections.OrderedDict([('13000', True), ('13001', True), ('13002', True)])
 DEBUGGING = True
 
 app = Flask(__name__)
@@ -191,7 +194,29 @@ def sendRequest(request):
     sock = socket.socket()
 
     try:
-        sock.connect((BACKEND_IP, BACKEND_PORT))
+        connected = False
+        while not connected:
+            try:
+                backend_port = -1
+                for port, alive in REPLICA_MANAGERS.iteritems():
+                    if alive:
+                        backend_port = int(port)
+                        break
+
+                if backend_port == -1:
+                    debug("\nAll backend servers are down!")
+                    flash("Could not connect to backend !!!!", "warning")
+                    response = {'success': False}
+                    return response
+                    
+                sock.connect((BACKEND_IP, backend_port))
+                connected = True
+            except socket.error, exc:
+                connected = False
+                REPLICA_MANAGERS[str(backend_port)] = False
+                debug("\nBackend server with port " + str(backend_port) + " is down. Switching to another one.")
+                time.sleep(SWITCH_BACKEND_INTERVAL)
+
         sock.send(json.dumps(request))
 
         data = ""
