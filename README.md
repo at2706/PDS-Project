@@ -37,10 +37,15 @@ Part 4
   - Specify the replica manger's (RM) port number using the first command line argument
     - it is assumed RMs have the same IP address: 127.0.0.1
   - Initiate three RMs using these ports in order: 13000, 13001, 13002
-    - The initial primary RM (13000) must be the first server to be started
-    - The other RMs must be started witihn the grace period (or they will be assumed dead by the primary)
     - This is a static system (fixed set of RMs)
     - Number of FEs can be dynamic though
+  - Other constraints/assumptions:
+    - The initial primary RM (13000) must be the first server to be started
+    - The other RMs must be started witihn the grace period (or they will be assumed dead by the primary)
+    - Adding RMs dynamically is not supported
+      - Ex: an RM that goes down for some time and later comes back online will be viewed as still dead by the other RMs
+    - Each RM's copy of the database must be the same before the whole thing is started
+    - No Byzantine faults
   - RMs track the state of other RMs: replica_manager(port, alive, heartbeat)
     - port: what port the RM is listening on
     - alive: is this RM alive?
