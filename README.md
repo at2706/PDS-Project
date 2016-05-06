@@ -33,20 +33,30 @@ Part 3
   - If multiple locks are needed, they are taken in this order: flw_file, user_file, msg_file; this ensures that we don't have a deadlock situation
 
 Part 4
+  - We implemented passive (primary) backup replication
   - Specify the replica manger's (RM) port number using the first command line argument
     - it is assumed RMs have the same IP address: 127.0.0.1
-  - Initiate three Ms using these ports in order: 13000, 13001, 13002
+  - Initiate three RMs using these ports in order: 13000, 13001, 13002
+    - The initial primary RM (13000) must be the first server to be started
+    - The other RMs must be started witihn the grace period (or they will be assumed dead by the primary)
+    - This is a static system (fixed set of RMs)
+    - Number of FEs can be dynamic though
   - RMs track the state of other RMs: replica_manager(port, alive, heartbeat)
     - port: what port the RM is listening on
     - alive: is this RM alive?
-    - heartbeat: did the slave RM respond to heartbeat message?
-  - The Primary RM sends heartbeat messages at fixed intervals to determine if the slave RM is still alive.
-  - Slave RMs are considered dead when they do not respond to the heartbeat message after a grace period.
-  - When a RM dies the next RM in the vector will become the primary RM.
-    - The vector of RMs are syncronized
-  - The frontend (FE) will follow a similar process when a RM dies
-  - The FE will only send requests to the known primary RM
-  - Only write requests are transmitted to the slave RMs
+    - heartbeat: did this RM recently send a heartbeat message to us?
+  - Slave RMs sends heartbeat messages at fixed intervals to the primary RM to determine if the primary RM is still alive.
+  - When a primary RM is dead, the slave RMs will determine who will be the next primary RM
+    - The next RM in the vector will become the primary RM if it is alive
+    - The list is ordered and everyone (both RMs and FEs) knows this list beforehand
+  - The primary RM will consider a slave RM to be dead if the primary RM doesn't receive a heartbeat message from it within a period a time
+  - The frontend (FE) will send requests to the first RM in list. If fail, send to the next RM in list
+    - With our system, the first alive RM in the list is always the primary RM
+  - Backup procedure:
+    1. FE issues request to the primary RM
+    2. Primary RM executes request
+    3. If request does a write, the primary RM transmits the request all alive slave RMs
+    4. Primary RM responds back to FE
 
 
 Written by:
