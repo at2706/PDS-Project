@@ -63,9 +63,14 @@ const string USER_FILE = "db/users";
 const string MSG_FILE = "db/messages";
 const string FLW_FILE = "db/follows";
 
+// Replica Manager Tuple: (port, alive, heartbeat)
+// port: Which port the RM is listening on
+// alive: indicates whether the RM is alive with respect to itself
+// heartbeat: whether or not this RM has recieved a heartbeat recently
 vector<tuple<int, bool, bool>> replica_managers {make_tuple(FIRST_RM_PORT, true, false), 
 		make_tuple(SECOND_RM_PORT, true, false), make_tuple(THIRD_RM_PORT, true, false)};
 bool isPrimaryManager = false;
+mutex rm_mx; //Lock for replica_managers
 
 void slaveHandler(int server_port);
 void slaveHeartBeat(int server_port);

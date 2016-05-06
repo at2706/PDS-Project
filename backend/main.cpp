@@ -43,22 +43,29 @@ int main(int argc, char const *argv[]) {
 void slaveHandler(int server_port) {
 	while(true) {
 		sleep(HEARTBEAT_INTERVAL + HEARTBEAT_GRACE_PERIOD);
-		for (auto& rm : replica_managers) {
-			int port = get<0>(rm);
-			bool alive = get<1>(rm);
-			bool heartbeat_received = get<2>(rm);
-
-			//don't need to check ourselves since we are not a slave
-			if (port == server_port) continue;
-			//don't need to check dead slaves
-			if (!alive) continue;
-			//this slave didn't send a heartbeat - set him as dead
-			if (!heartbeat_received) {
-				get<1>(rm) = false;
-				cout << "SLAVE WITH PORT " << port << " IS DEAD." << endl;
+		try {
+			rm_mx.lock();
+			for (auto& rm : replica_managers) {
+				int port = get<0>(rm);
+				bool alive = get<1>(rm);
+				bool heartbeat_received = get<2>(rm);
+	
+				//don't need to check ourselves since we are not a slave
+				if (port == server_port) continue;
+				//don't need to check dead slaves
+				if (!alive) continue;
+				//this slave didn't send a heartbeat - set him as dead
+				if (!heartbeat_received) {
+					get<1>(rm) = false;
+					cout << "SLAVE WITH PORT " << port << " IS DEAD." << endl;
+				}
+				//reset
+				get<2>(rm) = false;
 			}
-			//reset
-			get<2>(rm) = false;
+			rm_mx.unlock();
+		}
+		catch(exception &e){
+			rm_mx.unlock();
 		}
 	}
 }
@@ -75,32 +82,38 @@ void slaveHeartBeat(int server_port) {
 			cout << "PRIMARY RM "<< primary_RM_port << " IS DOWN." << endl;
 			//make the next RM in list be primary RM
 			//could be itself
-			for (auto& rm : replica_managers) {
-				int port = get<0>(rm);
+			try {
+				rm_mx.lock();
+				for (auto& rm : replica_managers) {
+					int port = get<0>(rm);
 
-				//set previous primary RM as dead
-				if (port == primary_RM_port) {
-					get<1>(rm) = false;
-				}
+					//set previous primary RM as dead
+					if (port == primary_RM_port) {
+						get<1>(rm) = false;
+					}
 
-				//skip over dead RMs
-				bool alive = get<1>(rm);
-				if (!alive) continue;
+					//skip over dead RMs
+					bool alive = get<1>(rm);
+					if (!alive) continue;
 
-				//if next RM in list is itself
-				if (port == server_port) {
-					cout << "WE ARE NOW THE PRIMARY RM." << endl;
-					isPrimaryManager = true;
-					thread t(slaveHandler, server_port);
-					t.detach();
-					return;
+					//if next RM in list is itself
+					if (port == server_port) {
+						cout << "WE ARE NOW THE PRIMARY RM." << endl;
+						isPrimaryManager = true;
+						thread t(slaveHandler, server_port);
+						t.detach();
+						return;
+					}
+					//set next RM in list as primary
+					else {
+						cout << "PRIMARY RM IS NOW " << port << "." << endl;
+						primary_RM_port = port;
+						break;
+					}
 				}
-				//set next RM in list as primary
-				else {
-					cout << "PRIMARY RM IS NOW " << port << "." << endl;
-					primary_RM_port = port;
-					break;
-				}
+			}
+			catch(exception &e){
+				rm_mx.unlock();
 			}
 		}
 		else {
@@ -257,11 +270,18 @@ json processRequest(json request, int server_port) {
 		bool is_write_request = false;
 		if(request["type"] == "heartbeatMessage" && isPrimaryManager){
 			//Keep this slave alive by setting the heartbeat_received flag
-			for (auto& rm : replica_managers) {
-				int port = get<0>(rm);
-				if (request["data"]["from_port"] == port) {
-					get<2>(rm) = true; //heartbeat_received
+			try {		
+				rm_mx.lock();
+				for (auto& rm : replica_managers) {
+					int port = get<0>(rm);
+					if (request["data"]["from_port"] == port) {
+						get<2>(rm) = true; //heartbeat_received
+					}
 				}
+				rm_mx.unlock();
+			}
+			catch(exception &e){
+				rm_mx.unlock();
 			}
 			cout << "RECEIVED HEARTBEAT FROM " << request["data"]["from_port"] << endl;
 			response["type"] = "heartbeatResponse";
@@ -351,22 +371,30 @@ json processRequest(json request, int server_port) {
 
 		//tell slaves to do this request if its an update
 		if (isPrimaryManager && is_write_request) {
-			for (auto& rm : replica_managers) {
-				int port = get<0>(rm);
-				bool alive = get<1>(rm);
+			try {
+				rm_mx.lock();
+				for (auto& rm : replica_managers) {
+					int port = get<0>(rm);
+					bool alive = get<1>(rm);
 
-				//don't tell yourself since you are not a slave
-				if (port == server_port) continue;
-				//don't tell dead slaves
-				if (!alive) continue;
+					//don't tell yourself since you are not a slave
+					if (port == server_port) continue;
+					//don't tell dead slaves
+					if (!alive) continue;
 
-				//send the same request to this slave
-				int sock_fd = connectToServer(DEFAULT_SERVER_IP, port);
-				string request_encoded = request.dump();
-				if (write(sock_fd, request_encoded.c_str(), request_encoded.size()) == -1) {
-					perror("write failed");
-					exit(1);
-				}	
+					//send the same request to this slave
+					int sock_fd = connectToServer(DEFAULT_SERVER_IP, port);
+					string request_encoded = request.dump();
+					if (write(sock_fd, request_encoded.c_str(), request_encoded.size()) == -1) {
+						perror("write failed");
+						exit(1);
+					}
+					close(sock_fd);
+				}
+				rm_mx.unlock();
+			}
+			catch(exception &e){
+				rm_mx.unlock();
 			}
 		}
 

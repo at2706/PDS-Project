@@ -3,6 +3,7 @@ import hashlib
 import socket
 import json
 import time
+import sys
 from flask import Flask, render_template, request, redirect, flash, url_for, abort, session
 from jinja2 import TemplateNotFound
 from werkzeug import secure_filename
@@ -14,7 +15,11 @@ REPLICA_MANAGERS = collections.OrderedDict([('13000', True), ('13001', True), ('
 DEBUGGING = True
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+app.secret_key = 'allyourbasearebelongtous'
+try:
+    unique_id = sys.argv[1]
+except IndexError:
+    unique_id = os.urandom(24)
 
 
 @app.route("/", methods=['post', 'get'])
@@ -208,7 +213,7 @@ def sendRequest(request):
                     flash("Could not connect to backend !!!!", "warning")
                     response = {'success': False}
                     return response
-                    
+
                 sock.connect((BACKEND_IP, backend_port))
                 connected = True
             except socket.error, exc:
@@ -217,6 +222,7 @@ def sendRequest(request):
                 debug("\nBackend server with port " + str(backend_port) + " is down. Switching to another one.")
                 time.sleep(SWITCH_BACKEND_INTERVAL)
 
+        request['unique_id'] = unique_id
         sock.send(json.dumps(request))
 
         data = ""
