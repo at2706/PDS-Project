@@ -32,6 +32,22 @@ Part 2
 Part 3
   - If multiple locks are needed, they are taken in this order: flw_file, user_file, msg_file; this ensures that we don't have a deadlock situation
 
+Part 4
+  - Specify the replica manger's (RM) port number using the first command line argument
+    - it is assumed RMs have the same IP address: 127.0.0.1
+  - Initiate three Ms using these ports in order: 13000, 13001, 13002
+  - RMs track the state of other RMs: replica_manager(port, alive, heartbeat)
+    - port: what port the RM is listening on
+    - alive: is this RM alive?
+    - heartbeat: did the slave RM respond to heartbeat message?
+  - The Primary RM sends heartbeat messages at fixed intervals to determine if the slave RM is still alive.
+  - Slave RMs are considered dead when they do not respond to the heartbeat message after a grace period.
+  - When a RM dies the next RM in the vector will become the primary RM.
+    - The vector of RMs are syncronized
+  - The frontend (FE) will follow a similar process when a RM dies
+  - The FE will only send requests to the known primary RM
+  - Only write requests are transmitted to the slave RMs
+
 
 Written by:
   - Minhtri Tran
